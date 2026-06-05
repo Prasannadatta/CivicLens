@@ -1,105 +1,91 @@
-import { useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableRow,
-  Typography,
-  Button,
-  Collapse,
-  alpha,
-} from '@mui/material';
-import { Box } from '@mui/material';
+import { Box, Stack, Typography, alpha } from '@mui/material';
 import { useAppColors } from '../ColorModeContext';
 import { MODEL_BOTTOM_ROW_HEIGHT, cardSubtitleSx, cardTitleSx, sectionLabelSx } from '../styles/modelViewLayout';
+import { buildShapContributions } from '../utils/mlExplanation';
 import DashboardCard from './DashboardCard';
 
-const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const COMPACT_SECTIONS = [
-  {
-    title: 'Request',
-    rows: [
-      { key: 'complaint_type', label: 'Complaint' },
-      { key: 'agency', label: 'Agency' },
-      { key: 'borough', label: 'Borough' },
-      { key: 'incident_zip', label: 'ZIP' },
-      { key: 'open_data_channel_type', label: 'Channel' },
-    ],
-  },
-  {
-    title: 'Timing',
-    rows: [
-      { key: 'day_of_week', label: 'Day', format: (v) => DAY_NAMES[v] ?? v },
-      { key: 'month', label: 'Month', format: (v) => MONTH_NAMES[v] ?? v },
-    ],
-  },
-  {
-    title: 'Workload / history',
-    rows: [
-      { key: 'agency_workload_24h', label: 'Workload (24h)', format: (v) => `${v}` },
-      { key: 'agency_complaint_median', label: 'Agency + complaint', format: (v) => `${v} h` },
-      { key: 'agency_zip_median', label: 'Agency + ZIP', format: (v) => `${v} h` },
-      { key: 'complaint_median_hours', label: 'Complaint median', format: (v) => `${v} h` },
-    ],
-  },
-];
-
-const EXTRA_SECTIONS = [
-  {
-    title: 'Additional',
-    rows: [
-      { key: 'agency_median_hours', label: 'Agency median', format: (v) => `${v} h` },
-      { key: 'agency_volume', label: 'Agency volume', format: (v) => Number(v).toLocaleString() },
-      { key: 'agency_dow_median', label: 'Agency + DOW', format: (v) => `${v} h` },
-      { key: 'borough_complaint_median', label: 'Borough + complaint', format: (v) => `${v} h` },
-    ],
-  },
-];
-
-function formatValue(row, raw) {
-  if (raw == null || raw === '') return '—';
-  if (row.format) return row.format(raw);
-  return String(raw);
+function formatFeatureValue(feature, value) {
+  if (value == null || value === '' || value === '—') return '—';
+  if (feature === 'month') return MONTH_NAMES[Number(value)] ?? String(value);
+  if (feature === 'agency_workload_24h') return `${Number(value).toFixed(0)} reqs`;
+  if (feature?.includes('median')) return `${Number(value).toFixed(1)} h`;
+  return String(value);
 }
 
-const rowSx = (colors, isLabel) => ({
-  borderColor: colors.border,
-  py: 0,
-  px: 0,
-  height: 34,
-  fontSize: '0.8125rem',
-  lineHeight: 1.3,
-  ...(isLabel
-    ? { width: '44%', color: colors.textSecondary, fontWeight: 500 }
-    : { color: colors.textPrimary, fontWeight: 600, fontSize: '0.875rem' }),
-});
+// Sourced from top-level record fields (not in model_features)
+const CONTEXT_ROWS = [
+  { key: 'is_weekend', label: 'Weekend', format: (v) => (Number(v) === 1 ? 'Yes' : 'No') },
+  { key: 'is_holiday', label: 'Holiday', format: (v) => (Number(v) === 1 ? 'Yes' : 'No') },
+  { key: 'urgency_score', label: 'Urgency score', format: (v) => `${(Number(v) * 100).toFixed(0)}%` },
+  { key: 'delay_risk_score', label: 'Delay risk', format: (v) => `${(Number(v) * 100).toFixed(0)}%` },
+];
 
-function CompactSection({ section, features, colors }) {
+function FeatureRow({ label, value, shap, positiveColor, negativeColor, colors }) {
+  const positive = Number(shap) >= 0;
   return (
-    <Box sx={{ mb: 0.75 }}>
-      <Typography variant="caption" sx={{ ...sectionLabelSx, color: colors.textSecondary, display: 'block', mb: 0.35 }}>
-        {section.title}
+    <Stack
+      direction="row"
+      alignItems="center"
+      sx={{
+        py: 0.45,
+        borderBottom: `1px solid ${colors.border}`,
+        '&:last-child': { borderBottom: 0 },
+        '&:hover': { bgcolor: alpha(colors.textPrimary, 0.025) },
+      }}
+    >
+      <Typography
+        sx={{
+          flex: 1,
+          minWidth: 0,
+          color: colors.textSecondary,
+          fontWeight: 500,
+          fontSize: '0.8rem',
+          lineHeight: 1.3,
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {label}
       </Typography>
-      <Table size="small">
-        <TableBody>
-          {section.rows.map((row) => (
-            <TableRow key={row.key} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-              <TableCell sx={rowSx(colors, true)}>{row.label}</TableCell>
-              <TableCell sx={rowSx(colors, false)}>{formatValue(row, features?.[row.key])}</TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </Box>
+      <Typography
+        sx={{
+          color: colors.textPrimary,
+          fontWeight: 600,
+          fontSize: '0.8125rem',
+          fontVariantNumeric: 'tabular-nums',
+          mx: 0.75,
+          flexShrink: 0,
+        }}
+      >
+        {value}
+      </Typography>
+      {shap != null && (
+        <Typography
+          sx={{
+            color: positive ? positiveColor : negativeColor,
+            fontWeight: 700,
+            fontSize: '0.7rem',
+            fontVariantNumeric: 'tabular-nums',
+            minWidth: 50,
+            textAlign: 'right',
+            flexShrink: 0,
+          }}
+        >
+          {positive ? '+' : ''}{Number(shap).toFixed(2)}h
+        </Typography>
+      )}
+    </Stack>
   );
 }
 
 export default function ModelFeatureTable({ request }) {
   const colors = useAppColors();
-  const [showAll, setShowAll] = useState(false);
-  const features = request?.model_features ?? {};
+  const positiveColor = colors.warning;
+  const negativeColor = colors.secondary;
+  const shapRows = buildShapContributions(request);
 
   return (
     <DashboardCard
@@ -114,44 +100,61 @@ export default function ModelFeatureTable({ request }) {
         '&:last-child': { pb: '22px' },
       }}
     >
-      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1, flexShrink: 0 }}>
-        Model Inputs
-      </Typography>
+      <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mb: 0.75, flexShrink: 0 }}>
+        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary }}>
+          Model Inputs
+        </Typography>
+        {/* Column guide: value on left, SHAP contribution on right */}
+        <Typography variant="caption" sx={{ color: colors.textMuted, fontSize: '0.65rem', letterSpacing: '0.04em' }}>
+          Value · SHAP
+        </Typography>
+      </Stack>
 
       {!request ? (
-        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>No case selected.</Typography>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>
+          No case selected.
+        </Typography>
       ) : (
-        <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
-          <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
-            {COMPACT_SECTIONS.map((section) => (
-              <CompactSection key={section.title} section={section} features={features} colors={colors} />
-            ))}
-            <Collapse in={showAll}>
-              {EXTRA_SECTIONS.map((section) => (
-                <CompactSection key={section.title} section={section} features={features} colors={colors} />
-              ))}
-            </Collapse>
-          </Box>
-
-          <Button
-            size="small"
-            onClick={() => setShowAll((open) => !open)}
-            sx={{
-              mt: 'auto',
-              pt: 0.75,
-              alignSelf: 'flex-start',
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.75rem',
-              color: colors.primary,
-              px: 0,
-              minWidth: 0,
-              minHeight: 28,
-              '&:hover': { bgcolor: alpha(colors.primary, 0.06) },
-            }}
+        <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>
+          {/* SHAP features — same features and order as the waterfall above */}
+          <Typography
+            variant="caption"
+            sx={{ ...sectionLabelSx, color: colors.textSecondary, display: 'block', mb: 0.35 }}
           >
-            {showAll ? 'Fewer' : 'All features'}
-          </Button>
+            SHAP Features
+          </Typography>
+          {shapRows.map((row) => (
+            <FeatureRow
+              key={row.feature}
+              label={row.label}
+              value={formatFeatureValue(row.feature, row.value)}
+              shap={row.shap}
+              positiveColor={positiveColor}
+              negativeColor={negativeColor}
+              colors={colors}
+            />
+          ))}
+
+          {/* Additional context features from top-level record fields */}
+          <Typography
+            variant="caption"
+            sx={{ ...sectionLabelSx, color: colors.textSecondary, display: 'block', mt: 1, mb: 0.35 }}
+          >
+            Context
+          </Typography>
+          {CONTEXT_ROWS.map((row) => {
+            const raw = request?.[row.key];
+            return (
+              <FeatureRow
+                key={row.key}
+                label={row.label}
+                value={raw != null ? row.format(raw) : '—'}
+                colors={colors}
+                positiveColor={positiveColor}
+                negativeColor={negativeColor}
+              />
+            );
+          })}
         </Box>
       )}
     </DashboardCard>
