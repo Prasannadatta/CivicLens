@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import {
-  Typography,
   Stack,
   FormControl,
   InputLabel,
@@ -12,11 +11,15 @@ import {
   Tooltip,
   alpha,
 } from '@mui/material';
-import FilterListIcon from '@mui/icons-material/FilterList';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { getActiveFilterChipSx, getSelectedFilterChipSx } from '../theme';
 import { useAppColors } from '../ColorModeContext';
-import DashboardCard from './DashboardCard';
+import {
+  filterRowGridSx,
+  filterToolbarShellSx,
+  getFilterFieldSx,
+  getFilterResetButtonSx,
+} from '../styles/filterControls';
 
 export const DEFAULT_FILTERS = {
   borough: 'All',
@@ -92,47 +95,8 @@ export default function FilterPanel({ requests = [], filters = DEFAULT_FILTERS, 
   };
 
   return (
-    <DashboardCard
-      sx={{ mb: 2 }}
-      contentSx={{ p: { xs: 2, md: 2.1 }, '&:last-child': { pb: { xs: 2, md: 2.1 } } }}
-    >
-      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between', mb: 1.25 }}>
-        <Box>
-          <Stack direction="row" spacing={0.9} sx={{ alignItems: 'center' }}>
-            <FilterListIcon sx={{ color: colors.primary, fontSize: 18 }} />
-            <Typography
-              variant="subtitle2"
-              sx={{ color: colors.textPrimary, letterSpacing: '0.06em', fontWeight: 800 }}
-            >
-              Filters Toolbar
-            </Typography>
-          </Stack>
-          <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.78rem', mt: 0.4, pl: 3, mb: 2 }}>
-            Compact controls for borough, complaint, agency, status, season, and year.
-          </Typography>
-        </Box>
-        {activeFilters.length > 0 && (
-          <Chip
-            label={`${activeFilters.length} active`}
-            size="small"
-            sx={{
-              ...getActiveFilterChipSx(colors, colors.secondary),
-              height: 24,
-            }}
-          />
-        )}
-      </Stack>
-
-      <Stack
-        direction={{ xs: 'column', sm: 'row' }}
-        spacing={1}
-        useFlexGap
-        sx={{
-          flexWrap: 'wrap',
-          alignItems: { xs: 'stretch', sm: 'flex-end' },
-          mb: activeFilters.length ? 1.3 : 0,
-        }}
-      >
+    <Box sx={filterToolbarShellSx}>
+      <Box sx={filterRowGridSx(6)}>
         {FILTER_CONFIG.map(({ key, label }) => {
           const isActive = filters[key] && filters[key] !== 'All';
           return (
@@ -140,15 +104,12 @@ export default function FilterPanel({ requests = [], filters = DEFAULT_FILTERS, 
               <FormControl
                 size="small"
                 sx={{
-                  minWidth: { xs: '100%', sm: 132 },
-                  flex: { sm: '1 1 132px' },
-                  maxWidth: { sm: 178 },
-                  '& .MuiOutlinedInput-root': isActive
-                    ? {
-                        boxShadow: `0 0 0 1px ${alpha(colors.warning, 0.35)}`,
-                        '& fieldset': { borderColor: alpha(colors.warning, 0.45) },
-                      }
-                    : undefined,
+                  ...getFilterFieldSx(colors, 'dashboard'),
+                  ...(isActive && {
+                    '& .MuiOutlinedInput-root fieldset': {
+                      borderColor: alpha(colors.warning, 0.45),
+                    },
+                  }),
                 }}
               >
                 <InputLabel id={`filter-${key}-label`}>{label}</InputLabel>
@@ -175,61 +136,26 @@ export default function FilterPanel({ requests = [], filters = DEFAULT_FILTERS, 
             size="small"
             startIcon={<RestartAltIcon />}
             onClick={onReset}
-            sx={{
-              minWidth: { xs: '100%', sm: 'auto' },
-              height: 38,
-              px: 1.8,
-              borderColor: colors.border,
-              color: colors.textSecondary,
-              whiteSpace: 'nowrap',
-              '&:hover': {
-                borderColor: colors.primary,
-                color: colors.primary,
-                bgcolor: alpha(colors.primary, 0.06),
-                transform: 'translateY(-1px)',
-              },
-              transition: 'all 0.2s ease',
-            }}
+            sx={getFilterResetButtonSx(colors, 'dashboard')}
           >
-            Reset Filters
+            Reset
           </Button>
         </Tooltip>
-      </Stack>
+      </Box>
 
       {activeFilters.length > 0 && (
-        <Box
-          sx={{
-            pt: 1.2,
-            borderTop: `1px solid ${colors.border}`,
-          }}
-        >
-          <Typography
-            variant="caption"
-            sx={{
-              display: 'block',
-              mb: 1,
-              color: colors.textSecondary,
-              textTransform: 'uppercase',
-              letterSpacing: '0.08em',
-              fontSize: '0.62rem',
-              fontWeight: 700,
-            }}
-          >
-            Active filter chips
-          </Typography>
-          <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap' }}>
-            {activeFilters.map(([key, value]) => (
-              <Chip
-                key={key}
-                label={`${FILTER_LABELS[key]}: ${truncateLabel(value, 22)}`}
-                size="small"
-                onDelete={() => handleRemoveFilter(key)}
-                sx={getChipSx(key)}
-              />
-            ))}
-          </Stack>
-        </Box>
+        <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap', mt: 1.25 }}>
+          {activeFilters.map(([key, value]) => (
+            <Chip
+              key={key}
+              label={`${FILTER_LABELS[key]}: ${truncateLabel(value, 22)}`}
+              size="small"
+              onDelete={() => handleRemoveFilter(key)}
+              sx={getChipSx(key)}
+            />
+          ))}
+        </Stack>
       )}
-    </DashboardCard>
+    </Box>
   );
 }

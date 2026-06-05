@@ -23,11 +23,26 @@ function activeNavBg(accent, isLight) {
   return alpha(accent, isLight ? 0.06 : 0.1);
 }
 
-/** Header nav — hover: accent text only; active: subtle tinted pill */
+function navChildrenInherit() {
+  return {
+    '& .MuiSvgIcon-root': { color: 'inherit' },
+    '& .MuiTypography-root': { color: 'inherit' },
+  };
+}
+
+function navChildrenAccent(accent) {
+  return {
+    '& .MuiSvgIcon-root': { color: accent },
+    '& .MuiTypography-root': { color: accent },
+  };
+}
+
+/** Header nav — hover/active: accent text; active: optional subtle tint, no border */
 export function getHeaderNavSx(colors, viewId, isActive) {
   const accent = getPageAccentColor(colors, viewId);
   const isLight = isLightFromColors(colors);
   const activeBg = activeNavBg(accent, isLight);
+  const idleColor = colors.textSecondary;
 
   return {
     minWidth: 0,
@@ -37,27 +52,32 @@ export function getHeaderNavSx(colors, viewId, isActive) {
     fontSize: '0.875rem',
     fontWeight: isActive ? 700 : 500,
     textTransform: 'none',
-    color: isActive ? accent : colors.textSecondary,
+    color: isActive ? accent : idleColor,
     bgcolor: isActive ? activeBg : 'transparent',
     borderRadius: '8px',
     border: 'none',
+    outline: 'none',
     boxShadow: 'none',
     transition: 'color 0.15s ease',
+    ...(isActive ? navChildrenAccent(accent) : {}),
     '&:hover': {
       bgcolor: isActive ? activeBg : 'transparent',
+      backgroundColor: isActive ? activeBg : 'transparent',
       color: accent,
       border: 'none',
+      outline: 'none',
       boxShadow: 'none',
+      ...navChildrenAccent(accent),
     },
   };
 }
 
-/** Right nav item — hover: accent icon/text only; active: subtle tint + border */
+/** Right nav item — hover/active: accent icon + text; active: subtle tint, no border */
 export function getSideNavItemSx(colors, viewId, isActive, isDisabled) {
   const accent = getPageAccentColor(colors, viewId);
   const isLight = isLightFromColors(colors);
   const activeBg = activeNavBg(accent, isLight);
-  const activeBorder = `1px solid ${alpha(accent, isLight ? 0.3 : 0.35)}`;
+  const idleColor = colors.textSecondary;
 
   return {
     display: 'flex',
@@ -68,19 +88,25 @@ export function getSideNavItemSx(colors, viewId, isActive, isDisabled) {
     width: '100%',
     px: 0.25,
     py: 0.65,
-    border: isActive ? activeBorder : '1px solid transparent',
+    border: 'none',
     borderRadius: '10px',
     cursor: isDisabled ? 'default' : 'pointer',
     bgcolor: isActive ? activeBg : 'transparent',
-    color: isActive ? accent : colors.textSecondary,
+    color: isActive ? accent : idleColor,
     opacity: isDisabled ? 0.55 : 1,
     transition: 'color 0.15s ease',
+    ...navChildrenInherit(),
+    ...(isActive ? navChildrenAccent(accent) : {}),
     '&:hover': isDisabled
       ? undefined
       : {
           bgcolor: isActive ? activeBg : 'transparent',
+          backgroundColor: isActive ? activeBg : 'transparent',
           color: accent,
-          border: isActive ? activeBorder : '1px solid transparent',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          ...navChildrenAccent(accent),
         },
   };
 }
@@ -90,7 +116,7 @@ export function getMobileNavItemSx(colors, viewId, isActive, isDisabled) {
   const accent = getPageAccentColor(colors, viewId);
   const isLight = isLightFromColors(colors);
   const activeBg = activeNavBg(accent, isLight);
-  const activeBorder = `1px solid ${alpha(accent, isLight ? 0.3 : 0.35)}`;
+  const idleColor = colors.textSecondary;
 
   return {
     display: 'flex',
@@ -101,19 +127,25 @@ export function getMobileNavItemSx(colors, viewId, isActive, isDisabled) {
     minWidth: 48,
     px: 0.85,
     py: 0.55,
-    border: isActive ? activeBorder : '1px solid transparent',
+    border: 'none',
     borderRadius: '10px',
     cursor: isDisabled ? 'default' : 'pointer',
     bgcolor: isActive ? activeBg : 'transparent',
-    color: isActive ? accent : colors.textSecondary,
+    color: isActive ? accent : idleColor,
     opacity: isDisabled ? 0.55 : 1,
     transition: 'color 0.15s ease',
+    ...navChildrenInherit(),
+    ...(isActive ? navChildrenAccent(accent) : {}),
     '&:hover': isDisabled
       ? undefined
       : {
           bgcolor: isActive ? activeBg : 'transparent',
+          backgroundColor: isActive ? activeBg : 'transparent',
           color: accent,
-          border: isActive ? activeBorder : '1px solid transparent',
+          border: 'none',
+          outline: 'none',
+          boxShadow: 'none',
+          ...navChildrenAccent(accent),
         },
   };
 }

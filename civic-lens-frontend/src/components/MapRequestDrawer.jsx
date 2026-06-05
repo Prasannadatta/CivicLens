@@ -55,22 +55,20 @@ function chipOutline(accent) {
 
 function bucketAccent(bucket, colors) {
   if (bucket === 'Same Day') return colors.secondary;
-  if (bucket === '1–3 Days') return colors.warning;
-  if (bucket === '3–7 Days') return '#f97316';
+  if (bucket === '1–3 Days') return colors.primary;
+  if (bucket === '3–7 Days') return colors.warning;
   if (bucket === 'More than 1 Week') return colors.error;
-  return colors.textSecondary;
+  return colors.textMuted;
 }
 
 function statusAccent(status, colors) {
   if (status === 'Closed') return colors.secondary;
-  if (status === 'In Progress') return colors.primary;
-  if (status === 'Open' || status === 'Pending') return colors.warning;
-  return colors.textSecondary;
+  if (status === 'In Progress' || status === 'Open' || status === 'Pending') return colors.error;
+  return colors.textMuted;
 }
 
 function riskAccent(level, colors) {
-  if (level === 'Critical') return colors.error;
-  if (level === 'High') return '#f97316';
+  if (level === 'Critical' || level === 'High') return colors.error;
   if (level === 'Medium') return colors.warning;
   return colors.secondary;
 }

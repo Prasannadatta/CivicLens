@@ -37,44 +37,107 @@ export const contentContainerSx = {
   boxSizing: 'border-box',
 };
 
-export const cardTitleSx = {
-  fontSize: '0.6875rem',
-  fontWeight: 700,
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
-  lineHeight: 1.2,
+/** Shared typography scale — page intros, cards, and metadata */
+export const typography = {
+  pageEyebrow: {
+    fontSize: '12px',
+    lineHeight: 1.4,
+    fontWeight: 700,
+    letterSpacing: '0.14em',
+    textTransform: 'uppercase',
+  },
+  pageTitle: {
+    fontWeight: 800,
+    fontSize: { xs: '30px', sm: '34px', md: '42px' },
+    lineHeight: 1.1,
+    letterSpacing: '-0.03em',
+  },
+  pageSubtitle: {
+    fontSize: { xs: '14px', md: '15px' },
+    lineHeight: 1.6,
+    fontWeight: 400,
+  },
+  heroBodySecondary: {
+    fontSize: '13px',
+    fontStyle: 'italic',
+    lineHeight: 1.6,
+    fontWeight: 400,
+  },
+  dataSource: {
+    fontSize: '11px',
+    lineHeight: 1.5,
+    fontWeight: 600,
+  },
+  cardTitle: {
+    fontSize: '15px',
+    fontWeight: 700,
+    lineHeight: 1.3,
+  },
+  cardSubtitle: {
+    fontSize: '13px',
+    lineHeight: 1.5,
+    fontWeight: 400,
+  },
+  smallMeta: {
+    fontSize: '12px',
+    lineHeight: 1.4,
+    fontWeight: 600,
+  },
 };
 
-export const sectionLabelSx = {
-  fontSize: '0.6875rem',
-  fontWeight: 700,
-  letterSpacing: '0.07em',
-  textTransform: 'uppercase',
-  lineHeight: 1.2,
+export const pageEyebrowSx = {
+  display: 'block',
+  mb: 0.75,
+  ...typography.pageEyebrow,
 };
 
 export const pageTitleSx = {
-  fontWeight: 800,
-  fontSize: { xs: '1.75rem', sm: '2.125rem', md: '2.5rem', lg: '2.625rem' },
-  letterSpacing: '-0.03em',
-  lineHeight: 1.12,
+  ...typography.pageTitle,
 };
 
-export const pageIntroEyebrowSx = {
-  display: 'block',
-  fontWeight: 700,
-  fontSize: '0.75rem',
-  letterSpacing: '0.14em',
-  textTransform: 'uppercase',
-  lineHeight: 1.2,
-  mb: 0.75,
-};
-
-export const pageIntroDescriptionSx = {
+export const pageSubtitleSx = {
   mt: 1,
   maxWidth: 760,
-  fontSize: { xs: '0.9375rem', md: '1.0625rem' },
-  lineHeight: 1.55,
+  ...typography.pageSubtitle,
 };
+
+export const heroBodyPrimarySx = {
+  ...typography.pageSubtitle,
+  mt: 0,
+  maxWidth: 520,
+};
+
+export const heroBodySecondarySx = {
+  ...typography.heroBodySecondary,
+  maxWidth: 520,
+};
+
+export const dataSourceSx = {
+  ...typography.dataSource,
+};
+
+export const cardTitleSx = {
+  ...typography.cardTitle,
+};
+
+export const cardSubtitleSx = {
+  ...typography.cardSubtitle,
+};
+
+export const smallMetaSx = {
+  ...typography.smallMeta,
+};
+
+export const sectionLabelSx = {
+  ...typography.smallMeta,
+  letterSpacing: '0.07em',
+  textTransform: 'uppercase',
+};
+
+/** @deprecated use pageEyebrowSx */
+export const pageIntroEyebrowSx = pageEyebrowSx;
+
+/** @deprecated use pageSubtitleSx */
+export const pageIntroDescriptionSx = pageSubtitleSx;
 
 export const PAGE_INTRO_MB = '24px';

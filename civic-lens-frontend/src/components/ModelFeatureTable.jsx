@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import { Box } from '@mui/material';
 import { useAppColors } from '../ColorModeContext';
-import { MODEL_BOTTOM_ROW_HEIGHT, cardTitleSx, sectionLabelSx } from '../styles/modelViewLayout';
+import { MODEL_BOTTOM_ROW_HEIGHT, cardSubtitleSx, cardTitleSx, sectionLabelSx } from '../styles/modelViewLayout';
 import DashboardCard from './DashboardCard';
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -119,7 +119,7 @@ export default function ModelFeatureTable({ request }) {
       </Typography>
 
       {!request ? (
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>No case selected.</Typography>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>No case selected.</Typography>
       ) : (
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>

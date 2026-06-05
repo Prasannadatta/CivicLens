@@ -86,7 +86,7 @@ export default function DashboardHotspotPreview({
       .attr('r', (d) => (d.risk >= 0.75 ? 4.2 : 3))
       .attr('fill', (d) => {
         if (d.risk >= 0.75) return colors.error;
-        if (d.status && !/closed/i.test(d.status)) return colors.warning;
+        if (d.status && !/closed/i.test(d.status)) return colors.error;
         return colors.secondary;
       })
       .attr('fill-opacity', 0.72)
@@ -112,13 +112,13 @@ export default function DashboardHotspotPreview({
   }, [points, width, plotHeight, colors, onSelectRequest]);
 
   return (
-    <GlassChartCard contentSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <GlassChartCard accent="map" contentSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <VizSectionHeader
         icon={ScatterPlotOutlinedIcon}
         iconColor={colors.secondary}
         title={title}
         subtitle={subtitle}
-        tooltip="Orange = open requests, red = high risk, teal = other. Click a point for details."
+        tooltip="Cyan = resolved/spatial, red = open or high risk. Click a point for details."
       />
 
       <Box

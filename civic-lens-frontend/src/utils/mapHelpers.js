@@ -1,12 +1,29 @@
 import { getPredictedDelayBucket } from '../data/mockRequests';
 
-export const DELAY_BUCKET_COLORS = {
-  'Same Day': '#10b981',
-  '1–3 Days': '#eab308',
-  '3–7 Days': '#f97316',
-  'More than 1 Week': '#ef4444',
-  unknown: '#94a3b8',
-};
+import { SEMANTIC_COLORS } from '../styles/semanticColors';
+
+/** Civic Lens map palette — aligned with semantic color tokens */
+export const MAP_THEME = SEMANTIC_COLORS;
+
+const COMPLAINT_SLOT_KEYS = ['cyan', 'blue', 'yellow', 'pink'];
+
+export function getMapPalette(mode = 'light') {
+  return MAP_THEME[mode] ?? MAP_THEME.light;
+}
+
+export function getDelayBucketColorMap(mode = 'light') {
+  const p = getMapPalette(mode);
+  return {
+    'Same Day': p.cyan,
+    '1–3 Days': p.blue,
+    '3–7 Days': p.yellow,
+    'More than 1 Week': p.red,
+    unknown: p.gray,
+  };
+}
+
+/** @deprecated prefer getDelayBucketColorMap(mode) */
+export const DELAY_BUCKET_COLORS = getDelayBucketColorMap('light');
 
 export const DELAY_BUCKET_LABELS = [
   'Same Day',
@@ -15,16 +32,13 @@ export const DELAY_BUCKET_LABELS = [
   'More than 1 Week',
 ];
 
-export const COMPLAINT_TYPE_PALETTE = [
-  '#2563eb',
-  '#7c3aed',
-  '#db2777',
-  '#0891b2',
-  '#059669',
-  '#d97706',
-  '#dc2626',
-  '#64748b',
-];
+export function getComplaintTypePalette(mode = 'light') {
+  const p = getMapPalette(mode);
+  return [...COMPLAINT_SLOT_KEYS.map((key) => p[key]), p.gray];
+}
+
+/** @deprecated prefer getComplaintTypePalette(mode) */
+export const COMPLAINT_TYPE_PALETTE = getComplaintTypePalette('light');
 
 export const DEFAULT_MAP_FILTERS = {
   borough: 'All',
@@ -100,17 +114,24 @@ export function getMapPlotPoints(requests) {
 export function getMarkerRadius(record) {
   const hours = Number(record?.predicted_response_hours ?? record?.response_hours) || 24;
   const bucket = getRequestDelayBucket(record);
-  const isHigh = bucket === '3–7 Days' || bucket === 'More than 1 Week';
-  const normalized = Math.min(Math.max(hours, 0) / 168, 1);
-  const base = 4 + normalized * 4;
-  return Math.min(isHigh ? base + 1.5 : base, 10);
+  const isMedium = bucket === '3–7 Days';
+  const isCritical = bucket === 'More than 1 Week';
+
+  const normalized = Math.sqrt(Math.min(Math.max(hours, 0) / 168, 1));
+  let radius = 4 + normalized * 2;
+
+  if (isMedium) radius += 0.75;
+  if (isCritical) radius += 1;
+
+  return Math.min(Math.max(radius, 4), 8);
 }
 
-export function getDelayBucketColor(bucket) {
-  return DELAY_BUCKET_COLORS[bucket] ?? DELAY_BUCKET_COLORS.unknown;
+export function getDelayBucketColor(bucket, mode = 'light') {
+  const map = getDelayBucketColorMap(mode);
+  return map[bucket] ?? map.unknown;
 }
 
-export function buildComplaintTypeColorMap(requests) {
+export function buildComplaintTypeColorMap(requests, mode = 'light') {
   const counts = {};
   requests.forEach((record) => {
     const type = String(record?.complaint_type ?? 'Unknown');
@@ -120,11 +141,13 @@ export function buildComplaintTypeColorMap(requests) {
   const sorted = Object.entries(counts).sort((a, b) => b[1] - a[1]);
   const topTypes = sorted.slice(0, 6).map(([type]) => type);
   const colorMap = {};
+  const palette = getMapPalette(mode);
+  const slotColors = COMPLAINT_SLOT_KEYS.map((key) => palette[key]);
 
   topTypes.forEach((type, index) => {
-    colorMap[type] = COMPLAINT_TYPE_PALETTE[index % COMPLAINT_TYPE_PALETTE.length];
+    colorMap[type] = index < slotColors.length ? slotColors[index] : palette.gray;
   });
-  colorMap.__other = COMPLAINT_TYPE_PALETTE[6];
+  colorMap.__other = palette.gray;
 
   return { colorMap, topTypes };
 }
@@ -135,11 +158,11 @@ export function getComplaintTypeColor(record, colorMap, topTypes) {
   return colorMap.__other ?? COMPLAINT_TYPE_PALETTE[6];
 }
 
-export function getMarkerColor(record, colorMode, complaintColorMap, topTypes) {
+export function getMarkerColor(record, colorMode, complaintColorMap, topTypes, mode = 'light') {
   if (colorMode === 'complaintType') {
     return getComplaintTypeColor(record, complaintColorMap, topTypes);
   }
-  return getDelayBucketColor(getRequestDelayBucket(record));
+  return getDelayBucketColor(getRequestDelayBucket(record), mode);
 }
 
 export function getMapStats(requests) {

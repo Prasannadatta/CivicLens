@@ -18,6 +18,7 @@ export default function DashboardCard({
     border: `1px solid ${colors.border}`,
     borderRadius: '22px',
     boxShadow: colors.cardShadow,
+    transition: hover ? 'border-color 0.2s ease, box-shadow 0.2s ease' : undefined,
   };
 
   return (
@@ -28,9 +29,8 @@ export default function DashboardCard({
         position: 'relative',
         overflow: 'visible',
         ...(hover && {
-          transition: 'border-color 0.2s ease, box-shadow 0.2s ease',
           '&:hover': {
-            borderColor: alpha(accent, 0.28),
+            borderColor: alpha(accent, 0.35),
             boxShadow: colors.cardHoverShadow,
           },
         }),
@@ -43,8 +43,8 @@ export default function DashboardCard({
     >
       <CardContent
         sx={{
-          p: '22px',
-          '&:last-child': { pb: '22px' },
+          p: '24px',
+          '&:last-child': { pb: '24px' },
           height: '100%',
           ...contentSx,
         }}

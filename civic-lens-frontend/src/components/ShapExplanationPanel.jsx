@@ -8,6 +8,7 @@ import {
   MODEL_ROW_HEIGHT,
   SHAP_CHART_HEIGHT,
   SHAP_FACTOR_LIMIT,
+  cardSubtitleSx,
   cardTitleSx,
 } from '../styles/modelViewLayout';
 import DashboardCard from './DashboardCard';
@@ -327,7 +328,7 @@ export default function ShapExplanationPanel({ request }) {
       </Stack>
 
       {!request ? (
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem', py: 2, textAlign: 'center' }}>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary, py: 2, textAlign: 'center' }}>
           No case selected.
         </Typography>
       ) : (

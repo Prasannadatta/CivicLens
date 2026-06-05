@@ -61,7 +61,7 @@ function CustomTooltip({ active, payload, label, colors }) {
       <Typography variant="caption" sx={{ display: 'block', color: colors.warning }}>
         Avg response: {formatHours(row.avgResponseHours ?? row.avgActual ?? 0)}
       </Typography>
-      <Typography variant="caption" sx={{ display: 'block', color: colors.secondary }}>
+      <Typography variant="caption" sx={{ display: 'block', color: colors.primary }}>
         Avg predicted: {formatHours(row.avgPredictedHours ?? row.avgPredicted ?? 0)}
       </Typography>
       <Typography variant="caption" sx={{ display: 'block', color: colors.error }}>
@@ -97,10 +97,10 @@ export default function DelayTimeline({
   const brushEndIndex = chartData.length > 0 ? chartData.length - 1 : 0;
 
   return (
-    <GlassChartCard>
+    <GlassChartCard accent="dashboard">
       <VizSectionHeader
         icon={TimelineIcon}
-        iconColor={colors.secondary}
+        iconColor={colors.warning}
         title={title}
         subtitle={subtitle}
         tooltip="Use the brush at the bottom to zoom a time window. Toggle unresolved to compare backlog pressure against delay."
@@ -237,10 +237,10 @@ export default function DelayTimeline({
                   type="monotone"
                   dataKey="avgPredictedHours"
                   name="Avg Predicted Hours"
-                  stroke={colors.secondary}
+                  stroke={colors.primary}
                   strokeWidth={2.5}
                   strokeDasharray="6 4"
-                  dot={{ r: 3, fill: colors.secondary, strokeWidth: 0 }}
+                  dot={{ r: 3, fill: colors.primary, strokeWidth: 0 }}
                   activeDot={{ r: 5 }}
                 />
 
@@ -278,7 +278,7 @@ export default function DelayTimeline({
             {[
               { label: 'Request count', swatch: chartColors[0] },
               { label: 'Avg response (actual)', swatch: colors.warning },
-              { label: 'Avg predicted', swatch: colors.secondary },
+              { label: 'Avg predicted', swatch: colors.primary },
               ...(showUnresolved ? [{ label: 'Unresolved %', swatch: colors.error }] : []),
             ].map((item) => (
               <Stack key={item.label} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>

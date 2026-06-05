@@ -1,5 +1,6 @@
 import { Box, Grid, Typography, alpha } from '@mui/material';
 import { getHomeTokens } from '../styles/homeTheme';
+import { cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
 
 const STEPS = [
   {
@@ -58,8 +59,7 @@ function StepContent({ step, tokens }) {
     <>
       <Typography
         sx={{
-          fontSize: '0.8rem',
-          fontWeight: 700,
+          ...cardTitleSx,
           color: tokens.textPrimary,
           letterSpacing: '-0.01em',
           mb: 0.5,
@@ -69,8 +69,7 @@ function StepContent({ step, tokens }) {
       </Typography>
       <Typography
         sx={{
-          fontSize: '0.8125rem',
-          lineHeight: 1.55,
+          ...cardSubtitleSx,
           color: tokens.textSecondary,
           maxWidth: 260,
           mx: 'auto',

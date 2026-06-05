@@ -3,8 +3,8 @@ import { useAppColors } from '../ColorModeContext';
 import { getPageAccentColor } from '../styles/pageAccents';
 import {
   PAGE_INTRO_MB,
-  pageIntroDescriptionSx,
-  pageIntroEyebrowSx,
+  pageEyebrowSx,
+  pageSubtitleSx,
   pageTitleSx,
 } from '../styles/modelViewLayout';
 
@@ -30,7 +30,7 @@ export default function PageIntro({ eyebrow, title, description, action, page, s
         <Typography
           variant="overline"
           sx={{
-            ...pageIntroEyebrowSx,
+            ...pageEyebrowSx,
             color: accent,
           }}
         >
@@ -61,7 +61,7 @@ export default function PageIntro({ eyebrow, title, description, action, page, s
           {description ? (
             <Typography
               sx={{
-                ...pageIntroDescriptionSx,
+                ...pageSubtitleSx,
                 color: colors.textSecondary,
               }}
             >

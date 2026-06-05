@@ -3,6 +3,7 @@ import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import { getHomeTokens } from '../styles/homeTheme';
+import { cardSubtitleSx, cardTitleSx, pageEyebrowSx } from '../styles/modelViewLayout';
 
 const CONFIG = {
   map: { icon: MapOutlinedIcon, accentKey: 'cyan' },
@@ -47,43 +48,50 @@ export default function HomeProductCard({ label, title, text, variant = 'map', m
         }),
       }}
     >
-      {label && (
-        <Typography
+      {(label || Icon) && (
+        <Box
           sx={{
-            fontSize: '0.65rem',
-            fontWeight: 700,
-            letterSpacing: '0.08em',
-            textTransform: 'uppercase',
-            color: accent,
-            mb: 1,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.25,
+            mb: 2,
           }}
         >
-          {label}
-        </Typography>
+          <Box
+            className="product-card-icon"
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: '12px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+              bgcolor: alpha(accent, t.isLight ? 0.08 : 0.14),
+              border: `1px solid ${alpha(accent, t.isLight ? 0.16 : 0.22)}`,
+              color: accent,
+              transition: 'color 0.2s ease, border-color 0.2s ease',
+            }}
+          >
+            <Icon sx={{ fontSize: 18 }} />
+          </Box>
+          {label && (
+            <Typography
+              sx={{
+                ...pageEyebrowSx,
+                mb: 0,
+                color: accent,
+              }}
+            >
+              {label}
+            </Typography>
+          )}
+        </Box>
       )}
-      <Box
-        className="product-card-icon"
-        sx={{
-          width: 40,
-          height: 40,
-          borderRadius: '12px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 1.5,
-          bgcolor: alpha(accent, t.isLight ? 0.08 : 0.14),
-          border: `1px solid ${alpha(accent, t.isLight ? 0.16 : 0.22)}`,
-          color: accent,
-          transition: 'color 0.2s ease, border-color 0.2s ease',
-        }}
-      >
-        <Icon sx={{ fontSize: 20 }} />
-      </Box>
       <Typography
         className="product-card-title"
         sx={{
-          fontWeight: 700,
-          fontSize: '0.95rem',
+          ...cardTitleSx,
           color: t.textPrimary,
           mb: 0.75,
           letterSpacing: '-0.01em',
@@ -92,7 +100,7 @@ export default function HomeProductCard({ label, title, text, variant = 'map', m
       >
         {title}
       </Typography>
-      <Typography sx={{ fontSize: '0.8125rem', lineHeight: 1.55, color: t.textSecondary }}>
+      <Typography sx={{ ...cardSubtitleSx, color: t.textSecondary }}>
         {text}
       </Typography>
     </Box>

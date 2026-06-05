@@ -5,6 +5,15 @@ import HomeProductCard from '../components/HomeProductCard';
 import HomeProcessSteps from '../components/HomeProcessSteps';
 import { useColorMode } from '../ColorModeContext';
 import { getHomeTokens, HOME_HERO_PT, HOME_SECTION_GAP } from '../styles/homeTheme';
+import {
+  cardSubtitleSx,
+  cardTitleSx,
+  dataSourceSx,
+  heroBodyPrimarySx,
+  heroBodySecondarySx,
+  pageEyebrowSx,
+  pageTitleSx,
+} from '../styles/modelViewLayout';
 
 const NYC_311_DATA_URL =
   'https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9';
@@ -43,8 +52,8 @@ function SectionTitle({ children, subtitle, tokens, centered = false, compact = 
     >
       <Typography
         sx={{
-          fontWeight: 700,
-          fontSize: { xs: '1.1rem', md: '1.2rem' },
+          ...cardTitleSx,
+          fontSize: '16px',
           letterSpacing: '-0.02em',
           color: tokens.textPrimary,
         }}
@@ -54,9 +63,8 @@ function SectionTitle({ children, subtitle, tokens, centered = false, compact = 
       {subtitle && (
         <Typography
           sx={{
+            ...cardSubtitleSx,
             mt: 0.75,
-            fontSize: '0.875rem',
-            lineHeight: 1.55,
             color: tokens.textSecondary,
             maxWidth: 640,
             mx: centered ? 'auto' : 0,
@@ -85,10 +93,7 @@ export default function HomePage({ onNavigate }) {
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography
             sx={{
-              fontSize: '0.7rem',
-              fontWeight: 700,
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
+              ...pageEyebrowSx,
               color: t.primary,
               mb: 1.25,
             }}
@@ -98,10 +103,7 @@ export default function HomePage({ onNavigate }) {
           <Typography
             component="h1"
             sx={{
-              fontWeight: 800,
-              fontSize: { xs: '2rem', sm: '2.3rem', md: '2.6rem' },
-              lineHeight: 1.12,
-              letterSpacing: '-0.03em',
+              ...pageTitleSx,
               color: t.textPrimary,
               mb: 1.5,
             }}
@@ -110,10 +112,8 @@ export default function HomePage({ onNavigate }) {
           </Typography>
           <Typography
             sx={{
-              fontSize: '0.95rem',
-              lineHeight: 1.65,
+              ...heroBodyPrimarySx,
               color: t.textSecondary,
-              maxWidth: 520,
               mb: 1.25,
             }}
           >
@@ -123,16 +123,26 @@ export default function HomePage({ onNavigate }) {
           </Typography>
           <Typography
             sx={{
-              fontSize: '0.875rem',
-              lineHeight: 1.6,
-              color: t.textMuted,
+              ...heroBodySecondarySx,
+              color: t.textSecondary,
               maxWidth: 520,
               mb: 2,
             }}
           >
-            The system combines a real NYC map, city-level dashboard, CatBoost delay prediction,
-            and SHAP-based explanations so users can move from broad service patterns to the reasons
-            behind a single delayed request.
+            The system combines a{' '}
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              real NYC map
+            </Box>
+            , city-level dashboard,{' '}
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              CatBoost delay prediction
+            </Box>
+            , and{' '}
+            <Box component="span" sx={{ fontWeight: 600 }}>
+              SHAP-based explanations
+            </Box>{' '}
+            so users can move from broad service patterns to the reasons behind a single delayed
+            request.
           </Typography>
 
           <Link
@@ -141,11 +151,10 @@ export default function HomePage({ onNavigate }) {
             rel="noopener noreferrer"
             underline="hover"
             sx={{
+              ...dataSourceSx,
               display: 'inline-flex',
               alignItems: 'center',
               gap: 0.5,
-              fontSize: '0.75rem',
-              fontWeight: 600,
               color: t.textMuted,
               '&:hover': { color: t.primary },
             }}

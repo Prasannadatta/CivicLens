@@ -11,7 +11,7 @@ import {
   getRequestDelayBucket,
 } from '../utils/mapHelpers';
 import MapLegend from './MapLegend';
-import DashboardCard from './DashboardCard';
+import AppCard from './AppCard';
 
 const NYC_CENTER = [40.7128, -74.006];
 const DEFAULT_ZOOM = 11;
@@ -36,13 +36,11 @@ function isHighDelayMarker(request) {
 }
 
 function getMarkerVisuals(request, color, isSelected, themeMode, colors) {
-  const baseRadius = getMarkerRadius(request);
+  const radius = getMarkerRadius(request);
   const highDelay = isHighDelayMarker(request);
-  const radius = highDelay ? Math.min(baseRadius + 1.2, 11) : baseRadius;
   const strokeColor = themeMode === 'light' ? '#ffffff' : '#141827';
-  const selectedRing = colors.primary;
-
-  const fillOpacity = isSelected ? 0.92 : highDelay ? 0.82 : 0.72;
+  const selectedRing = colors.secondary;
+  const fillOpacity = isSelected ? 0.82 : highDelay ? 0.78 : 0.68;
 
   return {
     radius,
@@ -51,9 +49,9 @@ function getMarkerVisuals(request, color, isSelected, themeMode, colors) {
       fillOpacity,
       color: isSelected ? selectedRing : strokeColor,
       weight: isSelected ? 3 : 1.5,
-      opacity: isSelected ? 1 : 0.95,
+      opacity: 0.9,
     },
-    hoverFillOpacity: isSelected ? 0.92 : highDelay ? 0.9 : 0.85,
+    hoverFillOpacity: isSelected ? 0.85 : highDelay ? 0.82 : 0.75,
     restFillOpacity: fillOpacity,
   };
 }
@@ -123,8 +121,8 @@ export default function NYCRequestMap({
   const plotPoints = useMemo(() => getMapPlotPoints(requests), [requests]);
 
   const { colorMap, topTypes } = useMemo(
-    () => buildComplaintTypeColorMap(requests),
-    [requests],
+    () => buildComplaintTypeColorMap(requests, mode),
+    [requests, mode],
   );
 
   const complaintLegend = useMemo(
@@ -151,14 +149,14 @@ export default function NYCRequestMap({
   const tileUrl = BASEMAP_TILES[mode] ?? BASEMAP_TILES.light;
 
   return (
-    <DashboardCard
+    <AppCard
+      accent="map"
+      sx={{ height: '100%', overflow: 'hidden' }}
       contentSx={{
         p: 0,
         position: 'relative',
         overflow: 'hidden',
-        '&:last-child': { pb: 0 },
       }}
-      sx={{ height: '100%' }}
     >
       <Box
         sx={{
@@ -166,13 +164,13 @@ export default function NYCRequestMap({
           width: '100%',
           height: mapHeight,
           minHeight: 480,
-          borderRadius: '20px',
           overflow: 'hidden',
+          bgcolor: 'transparent',
           '& .leaflet-container': {
             height: '100%',
             width: '100%',
             fontFamily: 'inherit',
-            background: mode === 'light' ? '#f1f3f5' : colors.mapOceanStart,
+            background: mode === 'light' ? '#eef2f6' : colors.mapOceanStart,
           },
           '& .leaflet-control-attribution': {
             fontSize: '0.62rem',
@@ -213,7 +211,7 @@ export default function NYCRequestMap({
             />
             {plotPoints.map((request) => {
               const id = request.unique_key ?? request._id;
-              const markerColor = getMarkerColor(request, colorMode, colorMap, topTypes);
+              const markerColor = getMarkerColor(request, colorMode, colorMap, topTypes, mode);
               return (
                 <RequestMarker
                   key={id}
@@ -237,6 +235,6 @@ export default function NYCRequestMap({
           />
         )}
       </Box>
-    </DashboardCard>
+    </AppCard>
   );
 }

@@ -10,7 +10,7 @@ import { LAYOUT_FOOTER_HEIGHT } from '../styles/modelViewLayout';
 const NAV_ITEMS = [
   { id: 'home', label: 'Home', icon: HomeOutlinedIcon },
   { id: 'model', label: 'Model', icon: PsychologyOutlinedIcon },
-  { id: 'dashboard', label: 'Dashboard', icon: DashboardOutlinedIcon },
+  { id: 'dashboard', label: 'Dash', icon: DashboardOutlinedIcon },
   { id: 'map', label: 'Map', icon: MapOutlinedIcon },
 ];
 

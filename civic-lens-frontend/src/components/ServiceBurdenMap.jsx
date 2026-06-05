@@ -48,11 +48,11 @@ const METRICS = [
 
 function getMetricColors(c) {
   return {
-    burdenScore: [c.chartScaleLow, c.primary],
-    count: [c.chartScaleLow, c.secondary],
+    burdenScore: [c.chartScaleLow, c.warning],
+    count: [c.chartScaleLow, c.primary],
     avgResponseHours: [c.chartScaleLow, c.warning],
     unresolvedRate: [c.chartScaleLow, c.error],
-    avgRisk: [c.chartScaleLow, '#a78bfa'],
+    avgRisk: [c.chartScaleLow, c.error],
   };
 }
 
@@ -361,10 +361,10 @@ export default function ServiceBurdenMap({
   }, [stats, selectedBorough, metric, dimensions, metricMeta, onSelectBorough, colors]);
 
   return (
-    <GlassChartCard selected={Boolean(selectedBorough)} accent={colors.warning}>
+    <GlassChartCard selected={Boolean(selectedBorough)} accent="dashboard">
       <VizSectionHeader
         icon={MapOutlinedIcon}
-        iconColor={colors.primary}
+        iconColor={colors.warning}
         title={title}
         subtitle={subtitle}
         tooltip="Burden score blends request volume, response delay, unresolved rate, and risk. Click a borough to filter all panels."

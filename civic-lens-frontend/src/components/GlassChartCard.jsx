@@ -1,30 +1,58 @@
-import DashboardCard from './DashboardCard';
+import AppCard from './AppCard';
+import { useAppColors } from '../ColorModeContext';
+
+const ACCENT_ALIASES = {
+  map: 'map',
+  dashboard: 'dashboard',
+  model: 'model',
+  risk: 'risk',
+  blue: 'blue',
+  neutral: 'neutral',
+};
+
+function normalizeAccent(accent, colors) {
+  if (!accent) return 'dashboard';
+  if (typeof accent === 'string' && ACCENT_ALIASES[accent]) return accent;
+  if (typeof accent === 'string' && accent.startsWith('#')) {
+    const entries = [
+      ['map', colors.secondary],
+      ['dashboard', colors.warning],
+      ['model', colors.accentPink],
+      ['risk', colors.error],
+      ['blue', colors.primary],
+    ];
+    const match = entries.find(([, value]) => value === accent);
+    return match ? match[0] : 'blue';
+  }
+  return 'dashboard';
+}
 
 /**
- * Chart container card — minimal surface, optional selected ring.
+ * Chart container for Dashboard/Map pages — landing-quality AppCard shell.
  */
 export default function GlassChartCard({
   children,
   selected = false,
-  accent,
+  accent = 'dashboard',
   contentSx,
   sx,
 }) {
+  const colors = useAppColors();
+  const resolvedAccent = normalizeAccent(accent, colors);
+
   return (
-    <DashboardCard
+    <AppCard
+      accent={resolvedAccent}
       selected={selected}
-      selectedColor={accent}
       sx={{ height: '100%', ...sx }}
       contentSx={{
-        p: '22px',
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        '&:last-child': { pb: '22px' },
         ...contentSx,
       }}
     >
       {children}
-    </DashboardCard>
+    </AppCard>
   );
 }

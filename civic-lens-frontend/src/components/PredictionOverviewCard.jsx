@@ -2,7 +2,7 @@ import { Box, Stack, Typography, Chip, alpha } from '@mui/material';
 import { useAppColors } from '../ColorModeContext';
 import { getPredictionSummary } from '../utils/mlExplanation';
 import { formatHours } from '../utils/analytics';
-import { MODEL_ROW_HEIGHT, cardTitleSx } from '../styles/modelViewLayout';
+import { MODEL_ROW_HEIGHT, cardSubtitleSx, cardTitleSx, smallMetaSx } from '../styles/modelViewLayout';
 import DashboardCard from './DashboardCard';
 
 function riskColor(level, colors) {
@@ -41,7 +41,7 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
         <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}>
           Prediction
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>
           No case selected.
         </Typography>
       </DashboardCard>
@@ -81,7 +81,7 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
             sx={{
               height: 22,
               fontWeight: 700,
-              fontSize: '0.6875rem',
+              ...smallMetaSx,
               bgcolor: alpha(colors.primary, 0.1),
               color: colors.primary,
               border: `1px solid ${alpha(colors.primary, 0.28)}`,
@@ -93,7 +93,7 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
             sx={{
               height: 22,
               fontWeight: 700,
-              fontSize: '0.6875rem',
+              ...smallMetaSx,
               bgcolor: alpha(riskAccent, 0.14),
               color: riskAccent,
               border: `1px solid ${alpha(riskAccent, 0.35)}`,
@@ -113,11 +113,11 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
           borderTop: `1px solid ${colors.border}`,
         }}
       >
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>
           <Box component="span" sx={{ color: colors.textSecondary, fontWeight: 600 }}>Actual: </Box>
           {actualLabel}
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>
           <Box component="span" sx={{ color: colors.textSecondary, fontWeight: 600 }}>Status: </Box>
           {request.status ?? '—'}
         </Typography>
@@ -128,10 +128,10 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
         noWrap
         title={[request.complaint_type, agency, location].filter(Boolean).join(' · ')}
         sx={{
+          ...cardSubtitleSx,
           color: colors.textPrimary,
           fontWeight: 600,
           mt: 1,
-          fontSize: '0.8125rem',
         }}
       >
         {[request.complaint_type, agency, location].filter(Boolean).join(' · ')}
@@ -148,9 +148,9 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
             border: 'none',
             background: 'none',
             cursor: 'pointer',
+            ...cardSubtitleSx,
             color: colors.primary,
             fontWeight: 600,
-            fontSize: '0.8125rem',
             p: 0,
             '&:hover': { textDecoration: 'underline' },
           }}

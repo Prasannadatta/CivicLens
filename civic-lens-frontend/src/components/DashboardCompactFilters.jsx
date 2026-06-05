@@ -1,18 +1,21 @@
 import { useMemo } from 'react';
 import {
-  Stack,
+  Box,
   FormControl,
   InputLabel,
   Select,
   MenuItem,
   Button,
-  Box,
-  alpha,
 } from '@mui/material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useAppColors } from '../ColorModeContext';
-import DashboardCard from './DashboardCard';
 import { DEFAULT_FILTERS } from './FilterPanel';
+import {
+  filterRowGridSx,
+  filterToolbarShellSx,
+  getFilterFieldSx,
+  getFilterResetButtonSx,
+} from '../styles/filterControls';
 
 const FILTER_KEYS = [
   { key: 'borough', field: 'borough', label: 'Borough' },
@@ -55,23 +58,10 @@ export default function DashboardCompactFilters({
   };
 
   return (
-    <DashboardCard contentSx={{ p: '16px 20px', '&:last-child': { pb: '16px' } }}>
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={1}
-        useFlexGap
-        sx={{ alignItems: { xs: 'stretch', lg: 'flex-end' }, flexWrap: 'wrap' }}
-      >
+    <Box sx={filterToolbarShellSx}>
+      <Box sx={filterRowGridSx(5)}>
         {FILTER_KEYS.map(({ key, label }) => (
-          <FormControl
-            key={key}
-            size="small"
-            sx={{
-              minWidth: { xs: '100%', sm: 140 },
-              flex: { lg: '1 1 140px' },
-              maxWidth: { lg: 200 },
-            }}
-          >
+          <FormControl key={key} size="small" sx={getFilterFieldSx(colors, 'dashboard')}>
             <InputLabel id={`dash-filter-${key}`}>{label}</InputLabel>
             <Select
               labelId={`dash-filter-${key}`}
@@ -93,25 +83,11 @@ export default function DashboardCompactFilters({
           size="small"
           startIcon={<RestartAltIcon />}
           onClick={onReset}
-          sx={{
-            height: 40,
-            px: 1.75,
-            borderColor: colors.border,
-            color: colors.textSecondary,
-            textTransform: 'none',
-            fontWeight: 600,
-            fontSize: '0.8125rem',
-            whiteSpace: 'nowrap',
-            '&:hover': {
-              borderColor: colors.warning,
-              color: colors.warning,
-              bgcolor: colors.neutralHoverBg,
-            },
-          }}
+          sx={getFilterResetButtonSx(colors, 'dashboard')}
         >
           Reset
         </Button>
-      </Stack>
-    </DashboardCard>
+      </Box>
+    </Box>
   );
 }

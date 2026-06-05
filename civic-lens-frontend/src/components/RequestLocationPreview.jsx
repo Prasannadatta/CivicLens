@@ -1,7 +1,7 @@
 import { Box, Typography, Tooltip, alpha } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useAppColors } from '../ColorModeContext';
-import { MODEL_BOTTOM_ROW_HEIGHT, cardTitleSx } from '../styles/modelViewLayout';
+import { MODEL_BOTTOM_ROW_HEIGHT, cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
 import DashboardCard from './DashboardCard';
 
 const NYC_BOUNDS = {
@@ -38,7 +38,7 @@ export default function RequestLocationPreview({ request }) {
         <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}>
           Location
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>No case selected.</Typography>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>No case selected.</Typography>
       </DashboardCard>
     );
   }
@@ -119,15 +119,15 @@ export default function RequestLocationPreview({ request }) {
         >
           {request.incident_address || 'Address unavailable'}
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem', mt: 0.35 }}>
+        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary, mt: 0.35 }}>
           {request.borough ?? '—'} · ZIP {request.incident_zip ?? '—'}
         </Typography>
         {hasCoords && (
           <Typography
             variant="body2"
             sx={{
+              ...cardSubtitleSx,
               color: colors.textSecondary,
-              fontSize: '0.8125rem',
               mt: 0.35,
               fontFamily: 'ui-monospace, monospace',
             }}

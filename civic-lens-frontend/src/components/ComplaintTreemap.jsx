@@ -253,10 +253,10 @@ export default function ComplaintTreemap({
   }, [leaves, dimensions, selectedComplaint, onSelectComplaint, colors]);
 
   return (
-    <GlassChartCard selected={Boolean(selectedComplaint)} accent={colors.warning}>
+    <GlassChartCard selected={Boolean(selectedComplaint)} accent="dashboard">
       <VizSectionHeader
         icon={AccountTreeOutlinedIcon}
-        iconColor={colors.secondary}
+        iconColor={colors.warning}
         title={title}
         subtitle={subtitle}
         tooltip="Click any tile to apply a complaint-type filter across the dashboard. Click again or use the chip to clear."

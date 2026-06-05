@@ -1,4 +1,5 @@
 import { createTheme, alpha } from '@mui/material/styles';
+import { typography as civicTypography } from './styles/modelViewLayout';
 
 export const paletteTokens = {
   dark: {
@@ -11,7 +12,7 @@ export const paletteTokens = {
     secondary: '#22d3ee',
     accentPink: '#f472b6',
     warning: '#fbbf24',
-    error: '#fb7185',
+    error: '#f87171',
     textPrimary: '#f8fafc',
     textSecondary: '#cbd5e1',
     textMuted: '#94a3b8',
@@ -47,9 +48,9 @@ export const paletteTokens = {
     secondary: '#0891b2',
     accentPink: '#ec4899',
     warning: '#f59e0b',
-    error: '#e11d48',
+    error: '#dc2626',
     textPrimary: '#0f172a',
-    textSecondary: '#64748b',
+    textSecondary: '#475569',
     textMuted: '#94a3b8',
     border: 'rgba(15, 23, 42, 0.08)',
     hoverBg: 'rgba(37, 99, 235, 0.08)',
@@ -57,9 +58,9 @@ export const paletteTokens = {
     neutralHoverBg: 'rgba(15, 23, 42, 0.04)',
     neutralSelectedBg: 'rgba(15, 23, 42, 0.06)',
     shellBg: 'rgba(255, 255, 255, 0.86)',
-    chartLabel: '#64748b',
-    chartScaleLow: '#e8eef5',
-    chartPlotBg: '#f1f5f9',
+    chartLabel: '#475569',
+    chartScaleLow: '#eef2f7',
+    chartPlotBg: '#f8fafc',
     tooltipBg: '#ffffff',
     headerGradientStart: '#ffffff',
     headerGradientEnd: '#f8fafc',
@@ -69,8 +70,8 @@ export const paletteTokens = {
     mapOceanEnd: '#e2e8f0',
     sectionLabel: '#2563eb',
     inputBg: 'rgba(15, 23, 42, 0.02)',
-    cardShadow: '0 16px 40px rgba(15, 23, 42, 0.06)',
-    cardHoverShadow: '0 16px 40px rgba(15, 23, 42, 0.08)',
+    cardShadow: '0 18px 45px rgba(15, 23, 42, 0.08)',
+    cardHoverShadow: '0 18px 45px rgba(15, 23, 42, 0.12)',
     glassShadow: '0 16px 40px rgba(15, 23, 42, 0.06)',
     gridStroke: 'rgba(15, 23, 42, 0.07)',
     treemapStroke: 'rgba(15, 23, 42, 0.10)',
@@ -103,14 +104,14 @@ export function getGlassCard(c) {
 }
 
 export function getChartPlotBox(c, mode) {
-  const insetBorder = mode === 'light' ? alpha('#0f172a', 0.06) : alpha('#94a3b8', 0.12);
+  const insetBorder = mode === 'light' ? alpha('#0f172a', 0.07) : alpha('#94a3b8', 0.12);
   return {
     position: 'relative',
     width: '100%',
     borderRadius: '14px',
     overflow: 'visible',
     border: `1px solid ${insetBorder}`,
-    bgcolor: c.chartPlotBg,
+    bgcolor: mode === 'light' ? c.cardSurface : c.chartPlotBg,
   };
 }
 
@@ -189,6 +190,7 @@ export function createAppTheme(mode = 'dark') {
   const isLight = mode === 'light';
 
   return createTheme({
+    civicTypography,
     palette: {
       mode,
       primary: {

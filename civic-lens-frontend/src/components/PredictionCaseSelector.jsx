@@ -3,12 +3,16 @@ import {
   Typography,
   TextField,
   Autocomplete,
+  Chip,
   alpha,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { useAppColors } from '../ColorModeContext';
-import { cardTitleSx } from '../styles/modelViewLayout';
-import DashboardCard from './DashboardCard';
+import { cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
+import {
+  filterToolbarShellSx,
+  getFilterAutocompleteSx,
+} from '../styles/filterControls';
 
 function truncate(text, max = 32) {
   const value = String(text ?? '');
@@ -57,24 +61,21 @@ export default function PredictionCaseSelector({
   onSelectRequest,
 }) {
   const colors = useAppColors();
+  const accent = colors.accentPink;
 
   return (
-    <DashboardCard
-      sx={{ height: 'auto', width: '100%' }}
-      contentSx={{
-        p: '18px 22px',
-        '&:last-child': { pb: '18px' },
-      }}
-    >
+    <Box sx={filterToolbarShellSx}>
       <Typography
         variant="subtitle2"
-        sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}
+        component="label"
+        sx={{ ...cardTitleSx, color: colors.textSecondary, display: 'block', mb: 1 }}
       >
         Select Case
       </Typography>
 
       <Autocomplete
         size="small"
+        fullWidth
         options={requests}
         value={selectedRequest}
         onChange={(_, value) => onSelectRequest?.(value)}
@@ -84,6 +85,24 @@ export default function PredictionCaseSelector({
           options.filter((record) => caseMatchesQuery(record, inputValue))
         }
         noOptionsText={requests.length ? 'No matching cases' : 'No requests available'}
+        slotProps={{
+          paper: {
+            sx: {
+              bgcolor: colors.cardSurface,
+              border: `1px solid ${colors.border}`,
+              boxShadow: colors.cardShadow,
+              '& .MuiAutocomplete-option': {
+                color: colors.textPrimary,
+                '&[aria-selected="true"]': {
+                  bgcolor: alpha(accent, 0.1),
+                },
+                '&.Mui-focused': {
+                  bgcolor: alpha(accent, 0.06),
+                },
+              },
+            },
+          },
+        }}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -100,47 +119,46 @@ export default function PredictionCaseSelector({
                 ),
               },
             }}
-            sx={{
-              '& .MuiOutlinedInput-root': {
-                minHeight: 44,
-                fontSize: '0.875rem',
-              },
-            }}
+            sx={getFilterAutocompleteSx(colors, 'model')}
           />
         )}
         renderOption={(props, option) => {
           const { key, ...optionProps } = props;
           return (
             <Box component="li" key={key} {...optionProps} sx={{ py: 0.75 }}>
-              <Typography variant="body2" sx={{ fontSize: '0.8125rem', color: colors.textPrimary, fontWeight: 600 }}>
+              <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textPrimary, fontWeight: 600 }}>
                 {formatCaseOptionLabel(option)}
               </Typography>
             </Box>
           );
         }}
-        sx={{ mb: selectedRequest ? 0.75 : 0 }}
       />
 
       {selectedRequest ? (
-        <Typography
-          variant="body2"
-          noWrap
-          title={formatSelectedSummary(selectedRequest)}
-          sx={{
-            color: colors.textSecondary,
-            fontSize: '0.8125rem',
-            fontWeight: 600,
-            px: 1.25,
-            py: 0.5,
-            lineHeight: 1.35,
-            borderRadius: 1.5,
-            bgcolor: alpha(colors.primary, 0.05),
-            border: `1px solid ${alpha(colors.primary, 0.14)}`,
-          }}
-        >
-          {formatSelectedSummary(selectedRequest)}
-        </Typography>
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mt: 1.25 }}>
+          <Chip
+            size="small"
+            label={formatSelectedSummary(selectedRequest)}
+            title={formatSelectedSummary(selectedRequest)}
+            sx={{
+              maxWidth: '100%',
+              height: 'auto',
+              py: 0.5,
+              '& .MuiChip-label': {
+                ...cardSubtitleSx,
+                fontWeight: 600,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                display: 'block',
+                color: colors.textSecondary,
+              },
+              bgcolor: alpha(accent, 0.06),
+              border: `1px solid ${alpha(accent, 0.2)}`,
+            }}
+          />
+        </Box>
       ) : null}
-    </DashboardCard>
+    </Box>
   );
 }

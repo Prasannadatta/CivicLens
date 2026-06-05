@@ -1,9 +1,10 @@
 import { Box, Stack, Typography, alpha } from '@mui/material';
-import { useAppColors } from '../ColorModeContext';
+import { useAppColors, useColorMode } from '../ColorModeContext';
+import { resolveAppAccent } from './AppCard';
 import {
-  DELAY_BUCKET_COLORS,
   DELAY_BUCKET_LABELS,
   getDelayBucketColor,
+  getMapPalette,
 } from '../utils/mapHelpers';
 
 function truncateLabel(text, max = 22) {
@@ -16,13 +17,14 @@ function LegendItem({ color, label, colors }) {
     <Stack direction="row" spacing={0.75} alignItems="center">
       <Box
         sx={{
-          width: 10,
-          height: 10,
+          width: 9,
+          height: 9,
           borderRadius: '50%',
           bgcolor: color,
-          border: `1px solid ${alpha(colors.textPrimary, 0.18)}`,
-          boxShadow: `0 0 0 1px ${alpha('#fff', 0.4)}`,
+          border: `1.5px solid ${colors.cardSurface}`,
+          boxShadow: `0 0 0 1px ${color}`,
           flexShrink: 0,
+          opacity: 0.9,
         }}
       />
       <Typography
@@ -36,20 +38,24 @@ function LegendItem({ color, label, colors }) {
   );
 }
 
-export default function MapLegend({ colorMode, complaintLegend = [], otherColor = '#64748b' }) {
+export default function MapLegend({ colorMode, complaintLegend = [], otherColor }) {
   const colors = useAppColors();
+  const { mode } = useColorMode();
+  const mapPalette = getMapPalette(mode);
+  const cyanAccent = resolveAppAccent('map', colors);
+  const resolvedOtherColor = otherColor ?? mapPalette.gray;
 
   const items = colorMode === 'complaintType'
     ? [
         ...complaintLegend.map(({ type, color }) => ({ color, label: type })),
-        { color: otherColor, label: 'Other' },
+        { color: resolvedOtherColor, label: 'Other' },
       ]
     : [
         ...DELAY_BUCKET_LABELS.map((label) => ({
-          color: getDelayBucketColor(label),
+          color: getDelayBucketColor(label, mode),
           label,
         })),
-        { color: DELAY_BUCKET_COLORS.unknown, label: 'Unknown' },
+        { color: getDelayBucketColor('unknown', mode), label: 'Unknown' },
       ];
 
   return (
@@ -59,15 +65,15 @@ export default function MapLegend({ colorMode, complaintLegend = [], otherColor 
         bottom: 14,
         left: 14,
         zIndex: 1000,
-        px: 1.25,
-        py: 1,
-        borderRadius: '12px',
-        bgcolor: alpha(colors.cardSurface, 0.97),
-        border: `1px solid ${alpha(colors.border, 0.9)}`,
-        boxShadow: `0 2px 12px ${alpha('#000', 0.12)}`,
-        backdropFilter: 'blur(10px)',
+        width: 'auto',
         maxWidth: 'calc(100% - 28px)',
         pointerEvents: 'none',
+        p: '12px 14px',
+        borderRadius: '14px',
+        bgcolor: alpha(colors.cardSurface, 0.96),
+        border: `1px solid ${colors.border}`,
+        boxShadow: `0 4px 16px ${alpha('#000', mode === 'light' ? 0.08 : 0.2)}`,
+        backdropFilter: 'blur(12px)',
       }}
     >
       <Typography
@@ -77,18 +83,18 @@ export default function MapLegend({ colorMode, complaintLegend = [], otherColor 
           mb: 0.75,
           fontWeight: 700,
           fontSize: '0.62rem',
-          letterSpacing: '0.06em',
+          letterSpacing: '0.08em',
           textTransform: 'uppercase',
-          color: colors.textSecondary,
+          color: cyanAccent,
         }}
       >
         {colorMode === 'complaintType' ? 'Complaint Type' : 'Delay Bucket'}
       </Typography>
       <Stack
         direction="row"
-        spacing={1.5}
+        spacing={1.25}
         useFlexGap
-        sx={{ flexWrap: 'wrap', rowGap: 0.5, columnGap: 1.5 }}
+        sx={{ flexWrap: 'wrap', rowGap: 0.5, columnGap: 1.25 }}
       >
         {items.map(({ color, label }) => (
           <LegendItem key={label} color={color} label={label} colors={colors} />
