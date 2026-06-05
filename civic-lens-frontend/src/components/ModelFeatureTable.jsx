@@ -79,7 +79,7 @@ const rowSx = (colors, isLabel) => ({
 function CompactSection({ section, features, colors }) {
   return (
     <Box sx={{ mb: 0.75 }}>
-      <Typography variant="caption" sx={{ ...sectionLabelSx, color: colors.textMuted, display: 'block', mb: 0.35 }}>
+      <Typography variant="caption" sx={{ ...sectionLabelSx, color: colors.textSecondary, display: 'block', mb: 0.35 }}>
         {section.title}
       </Typography>
       <Table size="small">
@@ -103,21 +103,23 @@ export default function ModelFeatureTable({ request }) {
 
   return (
     <DashboardCard
+      sx={{ width: '100%' }}
       contentSx={{
-        p: '20px',
+        p: '22px',
         height: MODEL_BOTTOM_ROW_HEIGHT,
+        width: '100%',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        '&:last-child': { pb: '20px' },
+        '&:last-child': { pb: '22px' },
       }}
     >
-      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted, mb: 1, flexShrink: 0 }}>
+      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1, flexShrink: 0 }}>
         Model Inputs
       </Typography>
 
       {!request ? (
-        <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.8125rem' }}>No case selected.</Typography>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>No case selected.</Typography>
       ) : (
         <Box sx={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
           <Box sx={{ flex: 1, minHeight: 0, overflow: 'auto' }}>

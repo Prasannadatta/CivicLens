@@ -1,22 +1,28 @@
 import DashboardCard from './DashboardCard';
 
 /**
- * Glassmorphism chart container with subtle lift-on-hover and optional selected ring.
+ * Chart container card — minimal surface, optional selected ring.
  */
 export default function GlassChartCard({
   children,
   selected = false,
-  accent = '#4da3ff',
+  accent,
   contentSx,
   sx,
 }) {
   return (
     <DashboardCard
-      hover
       selected={selected}
       selectedColor={accent}
-      sx={sx}
-      contentSx={contentSx}
+      sx={{ height: '100%', ...sx }}
+      contentSx={{
+        p: '22px',
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column',
+        '&:last-child': { pb: '22px' },
+        ...contentSx,
+      }}
     >
       {children}
     </DashboardCard>

@@ -25,6 +25,7 @@ function riskLabel(level) {
 const cardShellSx = {
   p: '22px',
   height: MODEL_ROW_HEIGHT,
+  width: '100%',
   boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
@@ -36,11 +37,11 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
 
   if (!request) {
     return (
-      <DashboardCard contentSx={{ ...cardShellSx, justifyContent: 'center' }}>
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted, mb: 1 }}>
+      <DashboardCard sx={{ width: '100%' }} contentSx={{ ...cardShellSx, justifyContent: 'center' }}>
+        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}>
           Prediction
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.8125rem' }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
           No case selected.
         </Typography>
       </DashboardCard>
@@ -55,8 +56,8 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
   const location = [request.borough, request.incident_zip].filter(Boolean).join(' ');
 
   return (
-    <DashboardCard contentSx={cardShellSx}>
-      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted, mb: 1.25 }}>
+    <DashboardCard sx={{ width: '100%' }} contentSx={cardShellSx}>
+      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1.25 }}>
         Prediction
       </Typography>
 
@@ -68,7 +69,7 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
             letterSpacing: '-0.03em',
             color: colors.textPrimary,
             lineHeight: 1,
-            fontSize: '2.5rem',
+            fontSize: '2.15rem',
           }}
         >
           {predictedLabel}
@@ -113,11 +114,11 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
         }}
       >
         <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
-          <Box component="span" sx={{ color: colors.textMuted, fontWeight: 600 }}>Actual: </Box>
+          <Box component="span" sx={{ color: colors.textSecondary, fontWeight: 600 }}>Actual: </Box>
           {actualLabel}
         </Typography>
         <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
-          <Box component="span" sx={{ color: colors.textMuted, fontWeight: 600 }}>Status: </Box>
+          <Box component="span" sx={{ color: colors.textSecondary, fontWeight: 600 }}>Status: </Box>
           {request.status ?? '—'}
         </Typography>
       </Stack>

@@ -46,7 +46,7 @@ export default function DashboardKpis({ kpis, showValueSkeleton = false }) {
   const colors = useAppColors();
 
   return (
-    <Grid container spacing={{ xs: 1.25, md: 1.5 }}>
+    <Grid container spacing={{ xs: 1.5, md: 2 }}>
       {KPI_CONFIG.map((card) => {
         const Icon = card.icon;
         const accent = colors[card.accentKey] ?? colors.primary;
@@ -58,34 +58,34 @@ export default function DashboardKpis({ kpis, showValueSkeleton = false }) {
               <Box component="span" sx={{ display: 'block', height: '100%' }}>
                 <DashboardCard
                   contentSx={{
-                    p: '16px 18px',
-                    height: 96,
+                    p: '18px 20px',
+                    height: 100,
                     boxSizing: 'border-box',
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    '&:last-child': { pb: '16px' },
+                    '&:last-child': { pb: '18px' },
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.85 }}>
                     <Box
                       sx={{
-                        width: 30,
-                        height: 30,
-                        borderRadius: 1.5,
+                        width: 28,
+                        height: 28,
+                        borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        bgcolor: alpha(accent, 0.12),
-                        border: `1px solid ${alpha(accent, 0.22)}`,
+                        bgcolor: alpha(accent, 0.08),
+                        border: `1px solid ${alpha(accent, 0.16)}`,
                       }}
                     >
-                      <Icon sx={{ fontSize: 16, color: accent }} />
+                      <Icon sx={{ fontSize: 15, color: accent }} />
                     </Box>
                     <Typography
                       variant="caption"
                       sx={{
-                        color: colors.textMuted,
+                        color: colors.textSecondary,
                         textTransform: 'uppercase',
                         letterSpacing: '0.07em',
                         fontSize: '0.625rem',
@@ -102,13 +102,13 @@ export default function DashboardKpis({ kpis, showValueSkeleton = false }) {
                     sx={{
                       fontWeight: 800,
                       color: colors.textPrimary,
-                      fontSize: '1.35rem',
+                      fontSize: '1.25rem',
                       lineHeight: 1.1,
                       letterSpacing: '-0.02em',
                     }}
                   >
                     {showValueSkeleton ? (
-                      <Skeleton variant="rounded" width="60%" height={28} sx={{ bgcolor: alpha(colors.textPrimary, 0.08) }} />
+                      <Skeleton variant="rounded" width="60%" height={26} sx={{ bgcolor: alpha(colors.textPrimary, 0.06) }} />
                     ) : (
                       value
                     )}

@@ -125,7 +125,7 @@ export default function DelayTimeline({
         )}
       />
 
-      <Box sx={{ width: '100%', height: plotHeight ?? { xs: 340, md: 380 }, minWidth: 0, mt: 0.5 }}>
+      <Box sx={{ width: '100%', height: plotHeight ?? { xs: 340, md: 380 }, minWidth: 0, minHeight: 0, mt: 0.5, flex: 1 }}>
           {chartData.length === 0 ? (
             <Box
               sx={{
@@ -135,7 +135,7 @@ export default function DelayTimeline({
                 justifyContent: 'center',
                 borderRadius: 2,
                 border: `1px dashed ${colors.border}`,
-                color: colors.textMuted,
+                color: colors.chartLabel,
               }}
             >
               <Typography variant="body2">No timeline data for the current filters.</Typography>
@@ -144,7 +144,7 @@ export default function DelayTimeline({
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart
                 data={chartData}
-                margin={{ top: 12, right: showUnresolved ? 18 : 8, left: 4, bottom: 8 }}
+                margin={{ top: 8, right: showUnresolved ? 12 : 6, left: 2, bottom: compactFooter ? 4 : 8 }}
               >
                 <defs>
                   <linearGradient id="timelineBarGradient" x1="0" y1="0" x2="0" y2="1">
@@ -157,7 +157,7 @@ export default function DelayTimeline({
 
                 <XAxis
                   dataKey="xLabel"
-                  tick={{ fill: colors.textMuted, fontSize: 11 }}
+                  tick={{ fill: colors.chartLabel, fontSize: 11 }}
                   axisLine={{ stroke: colors.border }}
                   tickLine={{ stroke: colors.border }}
                   interval="preserveStartEnd"
@@ -167,7 +167,7 @@ export default function DelayTimeline({
                 <YAxis
                   yAxisId="count"
                   orientation="left"
-                  tick={{ fill: colors.textMuted, fontSize: 11 }}
+                  tick={{ fill: colors.chartLabel, fontSize: 11 }}
                   axisLine={{ stroke: alpha(colors.primary, 0.35) }}
                   tickLine={false}
                   width={42}
@@ -177,7 +177,7 @@ export default function DelayTimeline({
                 <YAxis
                   yAxisId="hours"
                   orientation="right"
-                  tick={{ fill: colors.textMuted, fontSize: 11 }}
+                  tick={{ fill: colors.chartLabel, fontSize: 11 }}
                   axisLine={{ stroke: alpha(colors.warning, 0.35) }}
                   tickLine={false}
                   width={48}
@@ -201,11 +201,12 @@ export default function DelayTimeline({
 
                 <Legend
                   verticalAlign="top"
-                  height={showUnresolved ? 44 : 36}
+                  height={compactFooter ? (showUnresolved ? 36 : 30) : (showUnresolved ? 44 : 36)}
                   wrapperStyle={{
                     fontSize: 11,
                     color: colors.textSecondary,
-                    paddingBottom: 4,
+                    paddingBottom: 2,
+                    lineHeight: '14px',
                   }}
                   formatter={(value) => <span style={{ color: colors.textSecondary }}>{value}</span>}
                 />
@@ -256,13 +257,13 @@ export default function DelayTimeline({
                   />
                 )}
 
-                {chartData.length > 4 && (
+                {chartData.length > 4 && !compactFooter && (
                   <Brush
                     dataKey="xLabel"
-                    height={22}
-                    stroke={alpha(colors.primary, 0.65)}
-                    fill={alpha(colors.primary, 0.08)}
-                    travellerWidth={10}
+                    height={20}
+                    stroke={alpha(colors.primary, 0.45)}
+                    fill={alpha(colors.primary, 0.06)}
+                    travellerWidth={8}
                     startIndex={brushStartIndex}
                     endIndex={brushEndIndex}
                   />
@@ -282,7 +283,7 @@ export default function DelayTimeline({
             ].map((item) => (
               <Stack key={item.label} direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
                 <Box sx={{ width: 10, height: 10, borderRadius: 0.5, bgcolor: item.swatch, boxShadow: `0 0 8px ${alpha(item.swatch, 0.45)}` }} />
-                <Typography variant="caption" sx={{ color: colors.textMuted }}>
+                <Typography variant="caption" sx={{ color: colors.chartLabel }}>
                   {item.label}
                 </Typography>
               </Stack>

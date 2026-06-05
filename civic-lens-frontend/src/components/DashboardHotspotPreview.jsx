@@ -73,7 +73,7 @@ export default function DashboardHotspotPreview({
       .attr('width', width - padding.left - padding.right)
       .attr('height', height - padding.top - padding.bottom)
       .attr('rx', 8)
-      .attr('fill', alpha(colors.chartPlotBg, 0.5))
+      .attr('fill', colors.chartPlotBg)
       .attr('stroke', colors.border);
 
     const dots = plot
@@ -90,7 +90,7 @@ export default function DashboardHotspotPreview({
         return colors.secondary;
       })
       .attr('fill-opacity', 0.72)
-      .attr('stroke', alpha(colors.textPrimary, 0.35))
+      .attr('stroke', alpha(colors.chartLabel, 0.65))
       .attr('stroke-width', 0.6)
       .style('cursor', 'pointer')
       .on('mouseenter', function onEnter(event, d) {
@@ -130,11 +130,12 @@ export default function DashboardHotspotPreview({
           minHeight: plotHeight,
           mt: 0.5,
           position: 'relative',
+          overflow: 'hidden',
         }}
       >
         {points.length === 0 ? (
           <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.8125rem' }}>
+            <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
               No coordinate data for current filters.
             </Typography>
           </Box>

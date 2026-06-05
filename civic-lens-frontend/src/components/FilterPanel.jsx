@@ -107,7 +107,7 @@ export default function FilterPanel({ requests = [], filters = DEFAULT_FILTERS, 
               Filters Toolbar
             </Typography>
           </Stack>
-          <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.78rem', mt: 0.4, pl: 3, mb: 2 }}>
+          <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.78rem', mt: 0.4, pl: 3, mb: 2 }}>
             Compact controls for borough, complaint, agency, status, season, and year.
           </Typography>
         </Box>
@@ -208,7 +208,7 @@ export default function FilterPanel({ requests = [], filters = DEFAULT_FILTERS, 
             sx={{
               display: 'block',
               mb: 1,
-              color: colors.textMuted,
+              color: colors.textSecondary,
               textTransform: 'uppercase',
               letterSpacing: '0.08em',
               fontSize: '0.62rem',

@@ -1,26 +1,30 @@
 import { useState } from 'react';
-import { Box } from '@mui/material';
+import AppLayout from './components/AppLayout';
+import HomePage from './pages/HomePage';
 import ModelPage from './pages/ModelPage';
 import DashboardPage from './pages/DashboardPage';
+import MapPage from './pages/MapPage';
 
 export default function App() {
-  const [view, setView] = useState('model');
+  const [view, setView] = useState('home');
+
+  const renderPage = () => {
+    switch (view) {
+      case 'model':
+        return <ModelPage onNavigate={setView} />;
+      case 'dashboard':
+        return <DashboardPage onNavigate={setView} />;
+      case 'map':
+        return <MapPage />;
+      case 'home':
+      default:
+        return <HomePage onNavigate={setView} />;
+    }
+  };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        width: '100%',
-        display: 'flex',
-        flexDirection: 'column',
-        overflowX: 'hidden',
-      }}
-    >
-      {view === 'dashboard' ? (
-        <DashboardPage onNavigate={setView} />
-      ) : (
-        <ModelPage onNavigate={setView} />
-      )}
-    </Box>
+    <AppLayout currentView={view} onNavigate={setView}>
+      {renderPage()}
+    </AppLayout>
   );
 }

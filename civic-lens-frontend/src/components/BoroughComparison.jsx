@@ -114,7 +114,7 @@ function KpiColumn({ title, accent, snapshot, highlighted, colors }) {
       <Stack spacing={1.1} sx={{ mt: 1.25 }}>
         {KPI_FIELDS.map(({ key, label, format }) => (
           <Box key={key}>
-            <Typography variant="caption" sx={{ color: colors.textMuted, display: 'block', fontSize: '0.65rem' }}>
+            <Typography variant="caption" sx={{ color: colors.chartLabel, display: 'block', fontSize: '0.65rem' }}>
               {label}
             </Typography>
             <Typography variant="body2" sx={{ color: colors.textPrimary, fontWeight: 700 }}>
@@ -251,7 +251,7 @@ export default function BoroughComparison({ requests = [], selectedBorough = nul
 
       <Divider sx={{ borderColor: colors.border, mb: 2 }} />
 
-      <Typography variant="caption" sx={{ color: colors.textMuted, display: 'block', mb: 1 }}>
+      <Typography variant="caption" sx={{ color: colors.chartLabel, display: 'block', mb: 1 }}>
         Radar legend · normalized 0–100 scale relative to selected pair
       </Typography>
 
@@ -265,7 +265,7 @@ export default function BoroughComparison({ requests = [], selectedBorough = nul
               justifyContent: 'center',
               borderRadius: 2,
               border: `1px dashed ${colors.border}`,
-              color: colors.textMuted,
+              color: colors.chartLabel,
             }}
           >
             <Typography variant="body2">No borough data for the current filters.</Typography>
@@ -278,7 +278,7 @@ export default function BoroughComparison({ requests = [], selectedBorough = nul
               <PolarRadiusAxis
                 angle={90}
                 domain={[0, 100]}
-                tick={{ fill: colors.textMuted, fontSize: 10 }}
+                tick={{ fill: colors.chartLabel, fontSize: 10 }}
                 stroke={colors.border}
               />
               <RechartsTooltip content={<RadarTooltip boroughA={boroughA} boroughB={boroughB} colors={colors} />} />

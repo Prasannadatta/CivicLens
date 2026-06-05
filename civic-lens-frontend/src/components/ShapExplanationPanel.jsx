@@ -76,7 +76,7 @@ function SummaryMetric({ label, value, accent, colors, emphasize }) {
       <Typography
         variant="caption"
         sx={{
-          color: colors.textMuted,
+          color: colors.textSecondary,
           fontWeight: 600,
           fontSize: '0.625rem',
           textTransform: 'uppercase',
@@ -106,6 +106,7 @@ function SummaryMetric({ label, value, accent, colors, emphasize }) {
 const cardShellSx = {
   p: '22px',
   height: MODEL_ROW_HEIGHT,
+  width: '100%',
   boxSizing: 'border-box',
   display: 'flex',
   flexDirection: 'column',
@@ -157,8 +158,8 @@ export default function ShapExplanationPanel({ request }) {
   useEffect(() => {
     if (!svgRef.current || !factors.length) return;
 
-    const margin = { top: 22, right: 44, bottom: 20, left: 8 };
-    const labelColWidth = Math.min(196, Math.max(148, width * 0.34));
+    const margin = { top: 26, right: 52, bottom: 22, left: 14 };
+    const labelColWidth = Math.min(220, Math.max(168, width * 0.38));
     const plotLeft = margin.left + labelColWidth;
     const plotWidth = Math.max(120, width - plotLeft - margin.right);
     const plotHeight = SHAP_CHART_HEIGHT - margin.top - margin.bottom;
@@ -198,7 +199,7 @@ export default function ShapExplanationPanel({ request }) {
       .attr('width', plotWidth)
       .attr('height', plotHeight)
       .attr('rx', 6)
-      .attr('fill', alpha(colors.chartPlotBg, 0.65))
+      .attr('fill', colors.chartPlotBg)
       .attr('stroke', colors.border);
 
     const ticks = xScale.ticks(5).filter((t) => Math.abs(t) > 0.001);
@@ -221,7 +222,7 @@ export default function ShapExplanationPanel({ request }) {
       .attr('x2', zeroX)
       .attr('y1', 0)
       .attr('y2', plotHeight)
-      .attr('stroke', colors.textMuted)
+      .attr('stroke', colors.chartLabel)
       .attr('stroke-width', 2)
       .attr('opacity', 0.85);
 
@@ -315,18 +316,18 @@ export default function ShapExplanationPanel({ request }) {
   }, [factors, width, colors, positiveColor, negativeColor]);
 
   return (
-    <DashboardCard contentSx={cardShellSx}>
+    <DashboardCard sx={{ width: '100%' }} contentSx={cardShellSx}>
       <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center', mb: 0.75, flexShrink: 0 }}>
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted }}>
+        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary }}>
           Explanation
         </Typography>
         <Tooltip title="Positive SHAP values increase predicted delay; negative values reduce it." arrow placement="top">
-          <InfoOutlinedIcon sx={{ fontSize: 14, color: colors.textMuted, cursor: 'help' }} />
+          <InfoOutlinedIcon sx={{ fontSize: 14, color: colors.textSecondary, cursor: 'help' }} />
         </Tooltip>
       </Stack>
 
       {!request ? (
-        <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.8125rem', py: 2, textAlign: 'center' }}>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem', py: 2, textAlign: 'center' }}>
           No case selected.
         </Typography>
       ) : (
@@ -357,9 +358,10 @@ export default function ShapExplanationPanel({ request }) {
               minHeight: 0,
               height: SHAP_CHART_HEIGHT,
               maxHeight: SHAP_CHART_HEIGHT,
-              borderRadius: 1.5,
+              borderRadius: '14px',
               border: `1px solid ${colors.border}`,
-              overflow: 'hidden',
+              bgcolor: colors.chartPlotBg,
+              overflow: 'visible',
               display: 'flex',
               alignItems: 'center',
             }}
@@ -381,7 +383,7 @@ export default function ShapExplanationPanel({ request }) {
                   zIndex: 3,
                 }}
               >
-                <Typography variant="caption" sx={{ color: colors.textMuted, display: 'block', fontFamily: 'monospace', fontSize: '0.68rem' }}>
+                <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block', fontFamily: 'monospace', fontSize: '0.68rem' }}>
                   {tooltip.row.feature}
                 </Typography>
                 <Typography variant="body2" sx={{ fontWeight: 800, color: colors.textPrimary, lineHeight: 1.35, mt: 0.35, fontSize: '0.8125rem' }}>

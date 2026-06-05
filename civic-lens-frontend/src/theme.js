@@ -2,64 +2,78 @@ import { createTheme, alpha } from '@mui/material/styles';
 
 export const paletteTokens = {
   dark: {
-    background: '#07111f',
-    card: 'rgba(255, 255, 255, 0.08)',
-    cardSurface: 'rgba(15, 25, 45, 0.82)',
-    primary: '#4da3ff',
-    secondary: '#35e0d0',
-    warning: '#ffb74d',
-    error: '#ff5c8a',
-    textPrimary: '#f5f7fb',
-    textSecondary: 'rgba(245, 247, 251, 0.72)',
-    textMuted: 'rgba(245, 247, 251, 0.52)',
-    border: 'rgba(255, 255, 255, 0.1)',
-    chartScaleLow: '#0b1a30',
-    chartPlotBg: 'rgba(0, 0, 0, 0.12)',
-    tooltipBg: '#07111f',
-    headerGradientStart: '#172744',
-    headerGradientEnd: '#12223a',
-    chartBgStart: '#0c1929',
-    chartBgEnd: '#06101d',
-    mapOceanStart: '#06101d',
-    mapOceanEnd: '#0c1a2d',
-    sectionLabel: '#7dbaff',
+    background: '#141827',
+    backgroundAlt: '#171c2b',
+    card: '#1f2937',
+    cardSurface: '#1f2937',
+    cardElevated: '#243044',
+    primary: '#60a5fa',
+    secondary: '#22d3ee',
+    accentPink: '#f472b6',
+    warning: '#fbbf24',
+    error: '#fb7185',
+    textPrimary: '#f8fafc',
+    textSecondary: '#cbd5e1',
+    textMuted: '#94a3b8',
+    border: 'rgba(255, 255, 255, 0.10)',
+    hoverBg: 'rgba(96, 165, 250, 0.14)',
+    selectedBg: 'rgba(96, 165, 250, 0.18)',
+    neutralHoverBg: 'rgba(255, 255, 255, 0.06)',
+    neutralSelectedBg: 'rgba(255, 255, 255, 0.08)',
+    shellBg: 'rgba(31, 41, 55, 0.88)',
+    chartLabel: '#cbd5e1',
+    chartScaleLow: '#243044',
+    chartPlotBg: '#1a2333',
+    tooltipBg: '#243044',
+    headerGradientStart: '#1f2937',
+    headerGradientEnd: '#141827',
+    chartBgStart: '#1f2937',
+    chartBgEnd: '#171c2b',
+    mapOceanStart: '#1a2333',
+    mapOceanEnd: '#243044',
+    sectionLabel: '#60a5fa',
     inputBg: 'rgba(255, 255, 255, 0.04)',
-    cardShadow: '0 18px 50px rgba(0, 0, 0, 0.28)',
-    cardHoverShadow: '0 20px 55px rgba(0, 0, 0, 0.32)',
-    glassShadow:
-      '0 12px 40px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.08)',
-    gridStroke: 'rgba(255, 255, 255, 0.06)',
-    treemapStroke: 'rgba(255, 255, 255, 0.18)',
+    cardShadow: '0 16px 40px rgba(0, 0, 0, 0.24)',
+    cardHoverShadow: '0 16px 40px rgba(0, 0, 0, 0.28)',
+    glassShadow: '0 16px 40px rgba(0, 0, 0, 0.24)',
+    gridStroke: 'rgba(148, 163, 184, 0.10)',
+    treemapStroke: 'rgba(148, 163, 184, 0.16)',
   },
   light: {
-    background: '#f5f7fb',
-    card: 'rgba(255, 255, 255, 0.92)',
-    cardSurface: 'rgba(255, 255, 255, 0.92)',
+    background: '#f8fafc',
+    card: '#ffffff',
+    cardSurface: '#ffffff',
     primary: '#2563eb',
     secondary: '#0891b2',
+    accentPink: '#ec4899',
     warning: '#f59e0b',
     error: '#e11d48',
     textPrimary: '#0f172a',
-    textSecondary: '#475569',
-    textMuted: 'rgba(71, 85, 105, 0.75)',
-    border: 'rgba(15, 23, 42, 0.10)',
-    chartScaleLow: '#e2e8f0',
-    chartPlotBg: 'rgba(15, 23, 42, 0.04)',
+    textSecondary: '#64748b',
+    textMuted: '#94a3b8',
+    border: 'rgba(15, 23, 42, 0.08)',
+    hoverBg: 'rgba(37, 99, 235, 0.08)',
+    selectedBg: 'rgba(37, 99, 235, 0.12)',
+    neutralHoverBg: 'rgba(15, 23, 42, 0.04)',
+    neutralSelectedBg: 'rgba(15, 23, 42, 0.06)',
+    shellBg: 'rgba(255, 255, 255, 0.86)',
+    chartLabel: '#64748b',
+    chartScaleLow: '#e8eef5',
+    chartPlotBg: '#f1f5f9',
     tooltipBg: '#ffffff',
     headerGradientStart: '#ffffff',
     headerGradientEnd: '#f8fafc',
-    chartBgStart: '#f1f5f9',
-    chartBgEnd: '#e2e8f0',
-    mapOceanStart: '#e8eef5',
-    mapOceanEnd: '#dce4ef',
+    chartBgStart: '#f8fafc',
+    chartBgEnd: '#f1f5f9',
+    mapOceanStart: '#eef2f7',
+    mapOceanEnd: '#e2e8f0',
     sectionLabel: '#2563eb',
-    inputBg: 'rgba(15, 23, 42, 0.03)',
-    cardShadow: '0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04)',
-    cardHoverShadow: '0 12px 32px rgba(15, 23, 42, 0.10), 0 2px 8px rgba(15, 23, 42, 0.05)',
-    glassShadow:
-      '0 8px 24px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-    gridStroke: 'rgba(15, 23, 42, 0.08)',
-    treemapStroke: 'rgba(15, 23, 42, 0.12)',
+    inputBg: 'rgba(15, 23, 42, 0.02)',
+    cardShadow: '0 16px 40px rgba(15, 23, 42, 0.06)',
+    cardHoverShadow: '0 16px 40px rgba(15, 23, 42, 0.08)',
+    glassShadow: '0 16px 40px rgba(15, 23, 42, 0.06)',
+    gridStroke: 'rgba(15, 23, 42, 0.07)',
+    treemapStroke: 'rgba(15, 23, 42, 0.10)',
   },
 };
 
@@ -81,80 +95,93 @@ export function getChartColors(c) {
 
 export function getGlassCard(c) {
   return {
-    background: c.card,
-    backdropFilter: 'blur(20px)',
-    WebkitBackdropFilter: 'blur(20px)',
+    background: c.cardSurface,
     border: `1px solid ${c.border}`,
-    borderRadius: 16,
-    boxShadow: c.glassShadow,
+    borderRadius: 22,
+    boxShadow: c.cardShadow,
   };
 }
 
 export function getChartPlotBox(c, mode) {
-  const insetBorder = mode === 'light' ? alpha('#0f172a', 0.08) : alpha('#ffffff', 0.06);
+  const insetBorder = mode === 'light' ? alpha('#0f172a', 0.06) : alpha('#94a3b8', 0.12);
   return {
     position: 'relative',
     width: '100%',
-    borderRadius: 2,
-    overflow: 'hidden',
-    boxShadow: `inset 0 0 0 1px ${insetBorder}`,
+    borderRadius: '14px',
+    overflow: 'visible',
+    border: `1px solid ${insetBorder}`,
     bgcolor: c.chartPlotBg,
   };
 }
 
 export function getChartTooltipBox(c) {
+  const isLight = isLightPalette(c);
   return {
-    bgcolor: alpha(c.tooltipBg, 0.96),
-    border: `1px solid ${alpha(c.primary, 0.28)}`,
-    borderRadius: 2,
+    bgcolor: alpha(c.tooltipBg, 0.98),
+    border: `1px solid ${c.border}`,
+    borderRadius: 10,
     p: 1.5,
     pointerEvents: 'none',
     zIndex: 5,
-    boxShadow: `0 12px 32px ${alpha('#000', 0.12)}, 0 0 24px ${alpha(c.primary, 0.08)}`,
+    color: c.textPrimary,
+    boxShadow: isLight
+      ? '0 12px 32px rgba(15, 23, 42, 0.12)'
+      : '0 16px 40px rgba(0, 0, 0, 0.35)',
   };
 }
 
-export function getActiveFilterChipSx(c, accent = c.primary) {
+function isLightPalette(c) {
+  return c.background === paletteTokens.light.background;
+}
+
+export function getActiveFilterChipSx(c, accent = c.primary, isLight = isLightPalette(c)) {
   return {
     height: 26,
     fontSize: '0.7rem',
     fontWeight: 700,
-    bgcolor: alpha(accent, 0.14),
-    border: `1px solid ${alpha(accent, 0.35)}`,
-    color: c.textPrimary,
-    boxShadow: `0 0 16px ${alpha(accent, 0.12)}`,
+    bgcolor: alpha(accent, isLight ? 0.1 : 0.16),
+    border: `1px solid ${alpha(accent, isLight ? 0.28 : 0.35)}`,
+    color: accent,
     '& .MuiChip-deleteIcon': {
-      color: alpha(accent, 0.85),
-      '&:hover': { color: accent },
+      color: accent,
+      opacity: 0.85,
+      '&:hover': { color: accent, opacity: 1 },
     },
   };
 }
 
-export function getSelectedFilterChipSx(c) {
+export function getSelectedFilterChipSx(c, isLight = isLightPalette(c)) {
   return {
     fontWeight: 700,
-    color: c.warning,
-    border: `1px solid ${alpha(c.warning, 0.45)}`,
-    bgcolor: alpha(c.warning, 0.14),
-    boxShadow: `0 0 18px ${alpha(c.warning, 0.18)}`,
+    color: isLight ? '#b45309' : c.warning,
+    border: `1px solid ${alpha(c.warning, isLight ? 0.35 : 0.4)}`,
+    bgcolor: alpha(c.warning, isLight ? 0.12 : 0.16),
   };
 }
 
-function getBodyBackground(c, mode) {
-  if (mode === 'light') {
-    return `
-      radial-gradient(ellipse 80% 50% at 15% -10%, ${alpha(c.primary, 0.08)} 0%, transparent 55%),
-      radial-gradient(ellipse 60% 45% at 95% 5%, ${alpha(c.secondary, 0.06)} 0%, transparent 50%),
-      linear-gradient(165deg, #eef3f8 0%, ${c.background} 40%, #f5f7fb 100%)
-    `;
-  }
-  return `
-    radial-gradient(ellipse 80% 50% at 15% -10%, ${alpha(c.primary, 0.18)} 0%, transparent 55%),
-    radial-gradient(ellipse 60% 45% at 95% 5%, ${alpha(c.secondary, 0.12)} 0%, transparent 50%),
-    radial-gradient(ellipse 70% 40% at 50% 105%, ${alpha(c.primary, 0.08)} 0%, transparent 45%),
-    radial-gradient(circle at 70% 40%, ${alpha('#a78bfa', 0.04)} 0%, transparent 30%),
-    linear-gradient(165deg, #050c16 0%, #07111f 35%, #0a1628 55%, #07111f 100%)
-  `;
+export function getPinkChipSx(c, isLight = isLightPalette(c)) {
+  return {
+    fontWeight: 700,
+    color: c.accentPink,
+    bgcolor: alpha(c.accentPink, isLight ? 0.1 : 0.16),
+    border: `1px solid ${alpha(c.accentPink, isLight ? 0.28 : 0.35)}`,
+  };
+}
+
+/** @deprecated use getHeaderNavSx / getSideNavItemSx from pageAccents.js */
+export function getNavItemSx(c, isActive) {
+  return {
+    color: isActive ? c.primary : c.textSecondary,
+    bgcolor: isActive ? c.neutralSelectedBg : 'transparent',
+    '&:hover': {
+      bgcolor: c.neutralHoverBg,
+      color: c.textPrimary,
+    },
+  };
+}
+
+function getBodyBackground(c) {
+  return c.background;
 }
 
 export function createAppTheme(mode = 'dark') {
@@ -168,13 +195,13 @@ export function createAppTheme(mode = 'dark') {
         main: c.primary,
         light: isLight ? '#60a5fa' : '#7dbaff',
         dark: isLight ? '#1d4ed8' : '#2d7fd4',
-        contrastText: isLight ? '#ffffff' : '#07111f',
+        contrastText: isLight ? '#ffffff' : '#111827',
       },
       secondary: {
         main: c.secondary,
         light: isLight ? '#22d3ee' : '#6af0e4',
         dark: isLight ? '#0e7490' : '#1fb8aa',
-        contrastText: isLight ? '#ffffff' : '#07111f',
+        contrastText: isLight ? '#ffffff' : '#111827',
       },
       background: {
         default: c.background,
@@ -192,9 +219,9 @@ export function createAppTheme(mode = 'dark') {
       divider: c.border,
       action: {
         active: c.textPrimary,
-        hover: alpha(c.primary, isLight ? 0.06 : 0.08),
-        selected: alpha(c.primary, isLight ? 0.1 : 0.14),
-        disabled: c.textMuted,
+        hover: c.neutralHoverBg,
+        selected: c.neutralSelectedBg,
+        disabled: alpha(c.textMuted, 0.85),
         disabledBackground: alpha(isLight ? '#0f172a' : '#ffffff', isLight ? 0.04 : 0.06),
       },
     },
@@ -250,9 +277,7 @@ export function createAppTheme(mode = 'dark') {
           body: {
             minHeight: '100%',
             margin: 0,
-            backgroundColor: c.background,
-            backgroundImage: getBodyBackground(c, mode),
-            backgroundAttachment: 'fixed',
+            backgroundColor: getBodyBackground(c),
             color: c.textPrimary,
           },
           '#root': { minHeight: '100vh', width: '100%' },
@@ -266,35 +291,181 @@ export function createAppTheme(mode = 'dark') {
         styleOverrides: {
           root: {
             backgroundImage: 'none',
-            backgroundColor: c.card,
+            backgroundColor: c.cardSurface,
             border: `1px solid ${c.border}`,
-            backdropFilter: 'blur(16px)',
           },
-          rounded: { borderRadius: 16 },
+          rounded: { borderRadius: 22 },
         },
       },
       MuiCard: {
         styleOverrides: {
           root: {
-            backgroundColor: c.card,
+            backgroundColor: c.cardSurface,
             border: `1px solid ${c.border}`,
-            borderRadius: 16,
+            borderRadius: 22,
             boxShadow: c.cardShadow,
           },
         },
       },
       MuiButton: {
         styleOverrides: {
-          root: { borderRadius: 12, paddingInline: 18 },
+          root: {
+            borderRadius: 12,
+            paddingInline: 18,
+            fontWeight: 600,
+            textTransform: 'none',
+            boxShadow: 'none',
+          },
+          contained: {
+            boxShadow: 'none',
+            '&:hover': { boxShadow: 'none' },
+          },
           containedPrimary: {
-            boxShadow: `0 8px 24px ${alpha(c.primary, isLight ? 0.18 : 0.28)}`,
+            backgroundColor: isLight ? '#2563eb' : c.primary,
+            color: '#ffffff',
+            '&:hover': {
+              backgroundColor: isLight ? '#1d4ed8' : '#3b82f6',
+              boxShadow: 'none',
+            },
+          },
+          outlined: {
+            borderColor: alpha(c.primary, isLight ? 0.35 : 0.4),
+            color: c.primary,
+            backgroundColor: c.cardSurface,
+            '&:hover': {
+              borderColor: c.primary,
+              backgroundColor: c.neutralHoverBg,
+              color: c.primary,
+              boxShadow: 'none',
+            },
+          },
+          outlinedPrimary: {
+            borderColor: alpha(c.primary, isLight ? 0.35 : 0.4),
+            color: c.primary,
+            backgroundColor: c.cardSurface,
+            '&:hover': {
+              borderColor: c.primary,
+              backgroundColor: c.neutralHoverBg,
+              color: c.primary,
+            },
+          },
+          sizeLarge: {
+            minHeight: 44,
+            paddingInline: 22,
           },
         },
       },
       MuiChip: {
         styleOverrides: {
-          root: { fontWeight: 600, borderRadius: 10 },
+          root: {
+            fontWeight: 600,
+            borderRadius: 10,
+            color: c.textPrimary,
+          },
           outlined: { borderColor: c.border },
+          colorPrimary: {
+            bgcolor: alpha(c.primary, isLight ? 0.1 : 0.16),
+            color: c.primary,
+          },
+          colorSecondary: {
+            bgcolor: alpha(c.secondary, isLight ? 0.1 : 0.16),
+            color: c.secondary,
+          },
+          colorError: {
+            bgcolor: alpha(c.accentPink, isLight ? 0.1 : 0.16),
+            color: c.accentPink,
+          },
+          colorWarning: {
+            bgcolor: alpha(c.warning, isLight ? 0.12 : 0.16),
+            color: isLight ? '#b45309' : c.warning,
+          },
+        },
+      },
+      MuiIconButton: {
+        styleOverrides: {
+          root: {
+            color: c.textSecondary,
+            '&:hover': {
+              bgcolor: c.neutralHoverBg,
+              color: c.textPrimary,
+            },
+          },
+        },
+      },
+      MuiMenuItem: {
+        styleOverrides: {
+          root: {
+            fontSize: '0.875rem',
+            color: c.textPrimary,
+            '&:hover': {
+              bgcolor: c.neutralHoverBg,
+              color: c.textPrimary,
+            },
+            '&.Mui-selected': {
+              bgcolor: c.neutralSelectedBg,
+              color: c.textPrimary,
+              fontWeight: 600,
+              '&:hover': { bgcolor: c.neutralSelectedBg },
+            },
+          },
+        },
+      },
+      MuiAutocomplete: {
+        styleOverrides: {
+          paper: {
+            border: `1px solid ${c.border}`,
+            boxShadow: c.cardShadow,
+            bgcolor: c.cardSurface,
+          },
+          option: {
+            fontSize: '0.875rem',
+            color: c.textPrimary,
+            '&[aria-selected="true"]': {
+              bgcolor: `${c.neutralSelectedBg} !important`,
+            },
+            '&.Mui-focused': {
+              bgcolor: `${c.neutralHoverBg} !important`,
+            },
+          },
+        },
+      },
+      MuiToggleButton: {
+        styleOverrides: {
+          root: {
+            color: c.textSecondary,
+            borderColor: c.border,
+            textTransform: 'none',
+            '&:hover': {
+              bgcolor: c.neutralHoverBg,
+              color: c.textPrimary,
+            },
+            '&.Mui-selected': {
+              bgcolor: c.neutralSelectedBg,
+              color: c.textPrimary,
+              borderColor: c.border,
+              '&:hover': { bgcolor: c.neutralSelectedBg },
+            },
+          },
+        },
+      },
+      MuiListItemButton: {
+        styleOverrides: {
+          root: {
+            '&:hover': { bgcolor: c.neutralHoverBg },
+            '&.Mui-selected': {
+              bgcolor: c.neutralSelectedBg,
+              '&:hover': { bgcolor: c.neutralSelectedBg },
+            },
+          },
+        },
+      },
+      MuiInputLabel: {
+        styleOverrides: {
+          root: {
+            color: c.textSecondary,
+            fontSize: '0.875rem',
+            '&.Mui-focused': { color: c.primary },
+          },
         },
       },
       MuiOutlinedInput: {
@@ -304,7 +475,7 @@ export function createAppTheme(mode = 'dark') {
             backgroundColor: c.inputBg,
             '& .MuiOutlinedInput-notchedOutline': { borderColor: c.border },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: alpha(c.primary, 0.45),
+              borderColor: alpha(c.primary, isLight ? 0.35 : 0.45),
             },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
               borderColor: c.primary,
@@ -318,7 +489,7 @@ export function createAppTheme(mode = 'dark') {
       MuiDrawer: {
         styleOverrides: {
           paper: {
-            backgroundColor: alpha(c.background, 0.96),
+            backgroundColor: alpha(c.cardSurface, 0.98),
             borderLeft: `1px solid ${c.border}`,
             backdropFilter: 'blur(20px)',
           },

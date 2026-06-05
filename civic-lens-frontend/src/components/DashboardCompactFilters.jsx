@@ -55,7 +55,7 @@ export default function DashboardCompactFilters({
   };
 
   return (
-    <DashboardCard contentSx={{ p: '14px 18px', '&:last-child': { pb: '14px' } }}>
+    <DashboardCard contentSx={{ p: '16px 20px', '&:last-child': { pb: '16px' } }}>
       <Stack
         direction={{ xs: 'column', lg: 'row' }}
         spacing={1}
@@ -103,9 +103,9 @@ export default function DashboardCompactFilters({
             fontSize: '0.8125rem',
             whiteSpace: 'nowrap',
             '&:hover': {
-              borderColor: colors.primary,
-              color: colors.primary,
-              bgcolor: alpha(colors.primary, 0.06),
+              borderColor: colors.warning,
+              color: colors.warning,
+              bgcolor: colors.neutralHoverBg,
             },
           }}
         >

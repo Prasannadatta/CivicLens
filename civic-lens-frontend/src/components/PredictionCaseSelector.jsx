@@ -60,15 +60,15 @@ export default function PredictionCaseSelector({
 
   return (
     <DashboardCard
-      sx={{ height: 'auto' }}
+      sx={{ height: 'auto', width: '100%' }}
       contentSx={{
-        p: '18px 20px',
+        p: '18px 22px',
         '&:last-child': { pb: '18px' },
       }}
     >
       <Typography
         variant="subtitle2"
-        sx={{ ...cardTitleSx, color: colors.textMuted, mb: 1 }}
+        sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}
       >
         Select Case
       </Typography>
@@ -94,7 +94,7 @@ export default function PredictionCaseSelector({
                 ...params.slotProps?.input,
                 startAdornment: (
                   <>
-                    <SearchIcon sx={{ color: colors.textMuted, fontSize: 18, ml: 0.5, mr: 0.5 }} />
+                    <SearchIcon sx={{ color: colors.textSecondary, fontSize: 18, ml: 0.5, mr: 0.5 }} />
                     {params.slotProps?.input?.startAdornment}
                   </>
                 ),
@@ -102,7 +102,7 @@ export default function PredictionCaseSelector({
             }}
             sx={{
               '& .MuiOutlinedInput-root': {
-                minHeight: 48,
+                minHeight: 44,
                 fontSize: '0.875rem',
               },
             }}

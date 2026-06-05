@@ -113,7 +113,7 @@ function RiskGauge({ score, colors }) {
         <Typography variant="h4" sx={{ fontWeight: 800, color: gaugeColor, lineHeight: 1 }}>
           {score}
         </Typography>
-        <Typography variant="caption" sx={{ color: colors.textMuted, fontSize: '0.62rem', mt: 0.25 }}>
+        <Typography variant="caption" sx={{ color: colors.chartLabel, fontSize: '0.62rem', mt: 0.25 }}>
           Risk Index
         </Typography>
       </Box>
@@ -196,7 +196,7 @@ export default function DelayRiskPanel({
       >
         <RiskGauge score={riskIndex} colors={colors} />
         <Box flex={1}>
-          <Typography variant="overline" sx={{ color: colors.textMuted, letterSpacing: '0.08em' }}>
+          <Typography variant="overline" sx={{ color: colors.chartLabel, letterSpacing: '0.08em' }}>
             Model Readout
           </Typography>
           <Typography variant="body2" sx={{ color: colors.textPrimary, fontWeight: 600, mt: 0.5 }}>
@@ -220,7 +220,7 @@ export default function DelayRiskPanel({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              color: colors.textMuted,
+              color: colors.chartLabel,
               borderRadius: 2,
               border: `1px dashed ${colors.border}`,
             }}
@@ -238,7 +238,7 @@ export default function DelayRiskPanel({
               <XAxis
                 type="number"
                 domain={[0, 'dataMax']}
-                tick={{ fill: colors.textMuted, fontSize: 11 }}
+                tick={{ fill: colors.chartLabel, fontSize: 11 }}
                 axisLine={{ stroke: colors.border }}
                 tickFormatter={(value) => `${value}%`}
               />
@@ -262,7 +262,7 @@ export default function DelayRiskPanel({
       </Box>
 
       <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mt: 1.25 }}>
-        <Typography variant="caption" sx={{ color: colors.textMuted, width: '100%', mb: 0.25 }}>
+        <Typography variant="caption" sx={{ color: colors.chartLabel, width: '100%', mb: 0.25 }}>
           Legend · bar color
         </Typography>
         {chartData.slice(0, 4).map((factor, index) => (

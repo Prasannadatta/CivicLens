@@ -1,8 +1,5 @@
 import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Box, Alert, Typography, alpha } from '@mui/material';
-import { motion } from 'framer-motion';
-import AppHeader from '../components/AppHeader';
-import RightNav from '../components/RightNav';
+import { Box, Alert, alpha } from '@mui/material';
 import { DEFAULT_FILTERS } from '../components/FilterPanel';
 import RequestDetailsDrawer from '../components/RequestDetailsDrawer';
 import PredictionCaseSelector from '../components/PredictionCaseSelector';
@@ -10,37 +7,21 @@ import PredictionOverviewCard from '../components/PredictionOverviewCard';
 import ShapExplanationPanel from '../components/ShapExplanationPanel';
 import ModelFeatureTable from '../components/ModelFeatureTable';
 import RequestLocationPreview from '../components/RequestLocationPreview';
+import PageIntro from '../components/PageIntro';
 import { mockRequests } from '../data/mockRequests';
 import { useAppColors } from '../ColorModeContext';
 import { applyFilters } from '../utils/analytics';
 import { getDemoCases } from '../utils/mlExplanation';
 import {
-  PAGE_BOTTOM_PADDING,
   PAGE_GRID_GAP,
-  PAGE_NAV_RESERVE,
-  PAGE_PADDING_X,
-  PAGE_PADDING_Y,
   PAGE_SECTION_GAP,
 } from '../styles/modelViewLayout';
-
-const MotionBox = motion.create(Box);
 
 const GRID_12 = {
   display: 'grid',
   gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
   gap: PAGE_GRID_GAP,
   alignItems: 'stretch',
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: [0.22, 1, 0.36, 1] } },
-};
-
-const staggerContainer = {
-  show: {
-    transition: { staggerChildren: 0.04 },
-  },
 };
 
 const SHOWCASE_HIGH_DELAY_KEY = '61999001';
@@ -56,7 +37,7 @@ function pickDefaultCase(requests) {
   );
 }
 
-export default function ModelPage({ onNavigate }) {
+export default function ModelPage() {
   const colors = useAppColors();
   const [filters] = useState(DEFAULT_FILTERS);
   const [selectedRequest, setSelectedRequest] = useState(null);
@@ -95,117 +76,64 @@ export default function ModelPage({ onNavigate }) {
   }, []);
 
   return (
-    <Box
-      sx={{
-        flex: 1,
-        width: '100%',
-        minHeight: '100vh',
-        pb: PAGE_BOTTOM_PADDING,
-        position: 'relative',
-      }}
-    >
-      <Box
-        aria-hidden
-        sx={{
-          pointerEvents: 'none',
-          position: 'fixed',
-          inset: 0,
-          zIndex: 0,
-          background: `
-            radial-gradient(circle at 18% 22%, ${alpha(colors.primary, 0.04)} 0%, transparent 28%),
-            radial-gradient(circle at 82% 78%, ${alpha(colors.secondary, 0.03)} 0%, transparent 24%)
-          `,
-        }}
-      />
-
-      <RightNav activeView="model" onNavigate={onNavigate} />
-
-      <Box
-        sx={{
-          width: '100%',
-          maxWidth: 1320,
-          mx: 'auto',
-          px: PAGE_PADDING_X,
-          py: PAGE_PADDING_Y,
-          pr: {
-            xs: PAGE_PADDING_X.xs,
-            sm: PAGE_PADDING_X.sm,
-            md: `calc(${PAGE_PADDING_X.md} + ${PAGE_NAV_RESERVE})`,
-          },
-          boxSizing: 'border-box',
-          position: 'relative',
-          zIndex: 1,
-        }}
-      >
-        <MotionBox
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-        >
-          <AppHeader compact />
-        </MotionBox>
-
-        {!hasData && (
-          <Alert
-            severity="warning"
-            variant="outlined"
-            sx={{
-              mt: PAGE_SECTION_GAP,
-              borderColor: alpha(colors.warning, 0.45),
-              bgcolor: alpha(colors.warning, 0.06),
-              color: colors.textPrimary,
-              fontSize: '0.8125rem',
-              '& .MuiAlert-icon': { color: colors.warning },
-            }}
-          >
-            No requests available.
-          </Alert>
-        )}
-
-        <MotionBox
-          initial="hidden"
-          animate="show"
-          variants={staggerContainer}
+    <>
+      {!hasData && (
+        <Alert
+          severity="warning"
+          variant="outlined"
           sx={{
-            mt: PAGE_SECTION_GAP,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: PAGE_SECTION_GAP,
+            mb: PAGE_SECTION_GAP,
+            borderColor: alpha(colors.warning, 0.35),
+            bgcolor: alpha(colors.warning, 0.05),
+            color: colors.textPrimary,
+            fontSize: '0.8125rem',
+            '& .MuiAlert-icon': { color: colors.warning },
           }}
         >
-          <MotionBox variants={fadeUp}>
-            <PredictionCaseSelector
-              requests={caseOptions}
-              selectedRequest={displayCase}
-              onSelectRequest={setActiveCase}
+          No requests available.
+        </Alert>
+      )}
+
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: PAGE_SECTION_GAP,
+        }}
+      >
+        <PageIntro
+          page="model"
+          eyebrow="Prediction + Explainability"
+          title="Model Explanation"
+          description="Select a 311 request to inspect its predicted response delay, delay bucket, model inputs, and SHAP-based explanation."
+        />
+
+        <PredictionCaseSelector
+          requests={caseOptions}
+          selectedRequest={displayCase}
+          onSelectRequest={setActiveCase}
+        />
+
+        <Box sx={GRID_12}>
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minHeight: 0, display: 'flex' }}>
+            <PredictionOverviewCard
+              request={displayCase}
+              onViewRecord={displayCase ? () => handleOpenDrawer(displayCase) : undefined}
             />
-          </MotionBox>
+          </Box>
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 0, display: 'flex' }}>
+            <ShapExplanationPanel request={displayCase} />
+          </Box>
+        </Box>
 
-          <MotionBox variants={fadeUp}>
-            <Box sx={GRID_12}>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minHeight: 0 }}>
-                <PredictionOverviewCard
-                  request={displayCase}
-                  onViewRecord={displayCase ? () => handleOpenDrawer(displayCase) : undefined}
-                />
-              </Box>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 0 }}>
-                <ShapExplanationPanel request={displayCase} />
-              </Box>
-            </Box>
-          </MotionBox>
-
-          <MotionBox variants={fadeUp}>
-            <Box sx={GRID_12}>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minHeight: 0 }}>
-                <ModelFeatureTable request={displayCase} />
-              </Box>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minHeight: 0 }}>
-                <RequestLocationPreview request={displayCase} />
-              </Box>
-            </Box>
-          </MotionBox>
-        </MotionBox>
+        <Box sx={GRID_12}>
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minHeight: 0, display: 'flex' }}>
+            <ModelFeatureTable request={displayCase} />
+          </Box>
+          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minHeight: 0, display: 'flex' }}>
+            <RequestLocationPreview request={displayCase} />
+          </Box>
+        </Box>
       </Box>
 
       <RequestDetailsDrawer
@@ -213,6 +141,6 @@ export default function ModelPage({ onNavigate }) {
         request={selectedRequest}
         onClose={handleCloseDrawer}
       />
-    </Box>
+    </>
   );
 }

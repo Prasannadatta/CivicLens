@@ -1,18 +1,26 @@
-import { Box, Typography, alpha } from '@mui/material';
+import { Box, Typography } from '@mui/material';
+import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
 import DashboardOutlinedIcon from '@mui/icons-material/DashboardOutlined';
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import { useAppColors } from '../ColorModeContext';
+import { getMobileNavItemSx, getSideNavItemSx } from '../styles/pageAccents';
+import { LAYOUT_FOOTER_HEIGHT } from '../styles/modelViewLayout';
 
 const NAV_ITEMS = [
+  { id: 'home', label: 'Home', icon: HomeOutlinedIcon },
   { id: 'model', label: 'Model', icon: PsychologyOutlinedIcon },
   { id: 'dashboard', label: 'Dashboard', icon: DashboardOutlinedIcon },
-  { id: 'map', label: 'Map', icon: MapOutlinedIcon, disabled: true, hint: 'Next' },
+  { id: 'map', label: 'Map', icon: MapOutlinedIcon },
 ];
 
 function NavItem({ item, colors, layout, showLabel, isActive, onNavigate }) {
   const Icon = item.icon;
   const isDisabled = item.disabled;
+  const sx =
+    layout === 'horizontal'
+      ? getMobileNavItemSx(colors, item.id, isActive, isDisabled)
+      : getSideNavItemSx(colors, item.id, isActive, isDisabled);
 
   return (
     <Box
@@ -21,33 +29,10 @@ function NavItem({ item, colors, layout, showLabel, isActive, onNavigate }) {
       onClick={isDisabled ? undefined : () => onNavigate?.(item.id)}
       aria-current={isActive ? 'page' : undefined}
       aria-disabled={isDisabled || undefined}
-      title={isDisabled ? item.hint : item.label}
-      sx={{
-        display: 'flex',
-        flexDirection: layout === 'horizontal' ? 'row' : 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: layout === 'horizontal' ? 0.5 : 0.25,
-        width: layout === 'horizontal' ? 'auto' : '100%',
-        minWidth: layout === 'horizontal' ? 56 : undefined,
-        px: layout === 'horizontal' ? 1 : 0.25,
-        py: layout === 'horizontal' ? 0.65 : 0.75,
-        border: 'none',
-        borderRadius: 2,
-        cursor: isDisabled ? 'default' : 'pointer',
-        bgcolor: isActive ? alpha(colors.primary, 0.12) : 'transparent',
-        color: isActive ? colors.primary : colors.textMuted,
-        opacity: isDisabled ? 0.45 : 1,
-        transition: 'background-color 0.2s ease, color 0.2s ease',
-        '&:hover': isDisabled
-          ? undefined
-          : {
-              bgcolor: alpha(colors.primary, 0.08),
-              color: isActive ? colors.primary : colors.textPrimary,
-            },
-      }}
+      aria-label={item.label}
+      sx={sx}
     >
-      <Icon sx={{ fontSize: 20 }} />
+      <Icon sx={{ fontSize: 19 }} />
       {showLabel && (
         <Typography
           variant="caption"
@@ -65,17 +50,20 @@ function NavItem({ item, colors, layout, showLabel, isActive, onNavigate }) {
   );
 }
 
-export default function RightNav({ activeView = 'model', onNavigate }) {
+export default function RightNav({ activeView = 'home', onNavigate }) {
   const colors = useAppColors();
 
   const shellSx = {
-    borderRadius: '20px',
+    borderRadius: '18px',
     border: `1px solid ${colors.border}`,
-    bgcolor: alpha(colors.cardSurface, 0.98),
-    backdropFilter: 'blur(10px)',
-    boxShadow: `0 4px 20px ${alpha('#000', 0.06)}`,
-    p: '10px',
+    bgcolor: colors.shellBg,
+    backdropFilter: 'blur(12px)',
+    WebkitBackdropFilter: 'blur(12px)',
+    boxShadow: colors.cardShadow,
+    p: '8px',
   };
+
+  const mobileBottom = `calc(${LAYOUT_FOOTER_HEIGHT}px + 12px)`;
 
   return (
     <>
@@ -85,13 +73,13 @@ export default function RightNav({ activeView = 'model', onNavigate }) {
           '@media (min-width: 1100px)': {
             display: 'flex',
             position: 'fixed',
-            right: 24,
+            left: 24,
             top: '50%',
             transform: 'translateY(-50%)',
-            zIndex: 20,
-            width: 76,
+            zIndex: 1100,
+            width: 72,
             flexDirection: 'column',
-            gap: 0.35,
+            gap: 0.25,
           },
           ...shellSx,
         }}
@@ -114,12 +102,12 @@ export default function RightNav({ activeView = 'model', onNavigate }) {
           display: 'flex',
           '@media (min-width: 1100px)': { display: 'none' },
           position: 'fixed',
-          bottom: 16,
+          bottom: mobileBottom,
           left: '50%',
           transform: 'translateX(-50%)',
-          zIndex: 20,
+          zIndex: 1100,
           flexDirection: 'row',
-          gap: 0.35,
+          gap: 0.25,
           maxWidth: 'calc(100% - 28px)',
           ...shellSx,
         }}

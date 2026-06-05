@@ -26,17 +26,19 @@ export default function RequestLocationPreview({ request }) {
   if (!request) {
     return (
       <DashboardCard
+        sx={{ width: '100%' }}
         contentSx={{
-          p: '20px',
+          p: '22px',
           height: MODEL_BOTTOM_ROW_HEIGHT,
+          width: '100%',
           boxSizing: 'border-box',
-          '&:last-child': { pb: '20px' },
+          '&:last-child': { pb: '22px' },
         }}
       >
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted, mb: 1 }}>
+        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}>
           Location
         </Typography>
-        <Typography variant="body2" sx={{ color: colors.textMuted, fontSize: '0.8125rem' }}>No case selected.</Typography>
+        <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>No case selected.</Typography>
       </DashboardCard>
     );
   }
@@ -48,21 +50,23 @@ export default function RequestLocationPreview({ request }) {
 
   return (
     <DashboardCard
+      sx={{ width: '100%' }}
       contentSx={{
-        p: '20px',
+        p: '22px',
         height: MODEL_BOTTOM_ROW_HEIGHT,
+        width: '100%',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
-        '&:last-child': { pb: '20px' },
+        '&:last-child': { pb: '22px' },
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, flexShrink: 0 }}>
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textMuted }}>
+        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary }}>
           Location
         </Typography>
         <Tooltip title="Full NYC map will be added in the Dashboard view." arrow placement="top">
-          <InfoOutlinedIcon sx={{ fontSize: 14, color: colors.textMuted, cursor: 'help' }} />
+          <InfoOutlinedIcon sx={{ fontSize: 14, color: colors.textSecondary, cursor: 'help' }} />
         </Tooltip>
       </Box>
 
@@ -74,7 +78,7 @@ export default function RequestLocationPreview({ request }) {
           flexShrink: 0,
           borderRadius: 2,
           overflow: 'hidden',
-          background: `linear-gradient(160deg, ${alpha(colors.primary, 0.08)} 0%, ${alpha(colors.chartBgEnd, 0.95)} 100%)`,
+          bgcolor: colors.chartPlotBg,
           border: `1px solid ${colors.border}`,
         }}
       >
@@ -87,7 +91,7 @@ export default function RequestLocationPreview({ request }) {
               linear-gradient(90deg, ${colors.gridStroke} 1px, transparent 1px)
             `,
             backgroundSize: '18px 18px',
-            opacity: 0.5,
+            opacity: 0.65,
           }}
         />
         <Box
@@ -122,7 +126,7 @@ export default function RequestLocationPreview({ request }) {
           <Typography
             variant="body2"
             sx={{
-              color: colors.textMuted,
+              color: colors.textSecondary,
               fontSize: '0.8125rem',
               mt: 0.35,
               fontFamily: 'ui-monospace, monospace',

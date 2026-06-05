@@ -167,7 +167,7 @@ export default function ServiceBurdenMap({
 
       const glowFilter = defs.append('filter').attr('id', 'borough-glow');
       glowFilter.attr('x', '-40%').attr('y', '-40%').attr('width', '180%').attr('height', '180%');
-      glowFilter.append('feGaussianBlur').attr('stdDeviation', '4').attr('result', 'blur');
+      glowFilter.append('feGaussianBlur').attr('stdDeviation', '2').attr('result', 'blur');
       const merge = glowFilter.append('feMerge');
       merge.append('feMergeNode').attr('in', 'blur');
       merge.append('feMergeNode').attr('in', 'SourceGraphic');
@@ -211,8 +211,8 @@ export default function ServiceBurdenMap({
       .selectAll('stop')
       .attr('stop-color', (_, i) => (i === 0 ? colors.mapOceanStart : colors.mapOceanEnd));
 
-    root.select('.map-glow-a').attr('fill', alpha(colors.primary, 0.08));
-    root.select('.map-glow-b').attr('fill', alpha(colors.secondary, 0.06));
+    root.select('.map-glow-a').attr('fill', alpha(colors.primary, 0.04));
+    root.select('.map-glow-b').attr('fill', alpha(colors.secondary, 0.03));
 
     const { scale: colorScale, domainMin, domainMax } = buildColorScale(metric, stats, colors);
 
@@ -338,7 +338,7 @@ export default function ServiceBurdenMap({
         group
           .append('text')
           .attr('y', 30)
-          .attr('fill', alpha(colors.textPrimary, 0.55))
+          .attr('fill', colors.chartLabel)
           .attr('font-size', 11)
           .text(metricMeta.format(domainMin));
 
@@ -347,14 +347,14 @@ export default function ServiceBurdenMap({
           .attr('x', legendWidth)
           .attr('y', 30)
           .attr('text-anchor', 'end')
-          .attr('fill', alpha(colors.textPrimary, 0.55))
+          .attr('fill', colors.chartLabel)
           .attr('font-size', 11)
           .text(metricMeta.format(domainMax));
 
         group
           .append('text')
           .attr('y', 46)
-          .attr('fill', alpha(colors.textPrimary, 0.45))
+          .attr('fill', colors.textSecondary)
           .attr('font-size', 10)
           .text('Low → High (within filtered data)');
       });
@@ -404,8 +404,9 @@ export default function ServiceBurdenMap({
           ...chartPlotBox,
           height: plotHeight ?? { xs: 320, sm: 380, md: 420 },
           mt: 0.5,
-          borderRadius: 3,
-          boxShadow: `inset 0 0 0 1px ${alpha('#ffffff', 0.06)}, 0 16px 40px ${alpha('#000', 0.28)}`,
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
@@ -443,7 +444,7 @@ export default function ServiceBurdenMap({
       </Box>
 
       {!compactFooter && (
-        <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: colors.textMuted, fontFamily: 'inherit' }}>
+        <Typography variant="caption" sx={{ display: 'block', mt: 1.5, color: colors.textSecondary, fontFamily: 'inherit' }}>
           Click a borough to filter · Hover for KPIs · Legend shows {metricMeta.label.toLowerCase()} scale
         </Typography>
       )}

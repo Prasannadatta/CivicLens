@@ -157,7 +157,7 @@ export default function ComplaintTreemap({
       .attr('stroke', (d) => (selectedComplaint === d.data.name ? colors.warning : colors.treemapStroke))
       .attr('stroke-width', (d) => (selectedComplaint === d.data.name ? 3 : 1))
       .attr('opacity', (d) => (selectedComplaint && selectedComplaint !== d.data.name ? 0.42 : 0.94))
-      .attr('filter', (d) => (selectedComplaint === d.data.name ? 'drop-shadow(0 0 10px rgba(255,183,77,0.55))' : null));
+      .attr('filter', (d) => (selectedComplaint === d.data.name ? 'drop-shadow(0 0 6px rgba(245,158,11,0.35))' : null));
 
     cells.select('.treemap-rect').each(function attachHandlers(d) {
       const rect = d3.select(this);
@@ -204,7 +204,7 @@ export default function ComplaintTreemap({
       .select('.treemap-count')
       .attr('x', 8)
       .attr('y', 34)
-      .attr('fill', alpha(colors.textPrimary, 0.78))
+      .attr('fill', colors.textSecondary)
       .attr('font-size', 10)
       .text((d) => {
         const width = d.x1 - d.x0;
@@ -223,7 +223,7 @@ export default function ComplaintTreemap({
     legend
       .append('text')
       .attr('y', -10)
-      .attr('fill', alpha(colors.textPrimary, 0.72))
+      .attr('fill', colors.chartLabel)
       .attr('font-size', 11)
       .attr('font-weight', 600)
       .text('Legend · Avg delay (color)');
@@ -256,7 +256,7 @@ export default function ComplaintTreemap({
     <GlassChartCard selected={Boolean(selectedComplaint)} accent={colors.warning}>
       <VizSectionHeader
         icon={AccountTreeOutlinedIcon}
-        iconColor="#34d399"
+        iconColor={colors.secondary}
         title={title}
         subtitle={subtitle}
         tooltip="Click any tile to apply a complaint-type filter across the dashboard. Click again or use the chip to clear."
@@ -279,6 +279,9 @@ export default function ComplaintTreemap({
           ...chartPlotBox,
           height: plotHeight ?? { xs: 300, md: 360 },
           mt: 0.5,
+          flex: 1,
+          minHeight: 0,
+          overflow: 'hidden',
         }}
       >
           {leaves.length === 0 ? (
@@ -288,7 +291,7 @@ export default function ComplaintTreemap({
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                color: colors.textMuted,
+                color: colors.textSecondary,
               }}
             >
               <Typography variant="body2">No complaint data for the current filters.</Typography>
@@ -324,13 +327,13 @@ export default function ComplaintTreemap({
           <Stack direction="row" spacing={2} useFlexGap sx={{ flexWrap: 'wrap', mt: 1.5 }}>
             <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
               <Box sx={{ width: 22, height: 14, borderRadius: 0.5, bgcolor: alpha(colors.warning, 0.35), border: `1px solid ${alpha(colors.warning, 0.5)}` }} />
-              <Typography variant="caption" sx={{ color: colors.textMuted }}>
+              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                 Tile area = request count
               </Typography>
             </Stack>
             <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
               <Box sx={{ width: 22, height: 8, borderRadius: 4, background: `linear-gradient(90deg, ${colors.chartScaleLow}, ${colors.warning})` }} />
-              <Typography variant="caption" sx={{ color: colors.textMuted }}>
+              <Typography variant="caption" sx={{ color: colors.textSecondary }}>
                 Fill = avg response time (see in-chart gradient)
               </Typography>
             </Stack>
@@ -338,7 +341,7 @@ export default function ComplaintTreemap({
         )}
 
         {!compactFooter && (
-          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: colors.textMuted }}>
+          <Typography variant="caption" sx={{ display: 'block', mt: 1, color: colors.textSecondary }}>
             Click a complaint type to filter the dashboard · Selected tiles use a glowing stroke
           </Typography>
         )}

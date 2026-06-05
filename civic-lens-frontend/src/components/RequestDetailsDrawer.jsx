@@ -22,7 +22,7 @@ function Field({ label, value, mono, colors }) {
       <Typography
         variant="caption"
         sx={{
-          color: colors.textMuted,
+          color: colors.textSecondary,
           textTransform: 'uppercase',
           letterSpacing: '0.06em',
           fontSize: '0.65rem',
@@ -101,7 +101,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
             onClick={onClose}
             aria-label="Close drawer"
             sx={{
-              color: colors.textMuted,
+              color: colors.textSecondary,
               '&:hover': { color: colors.textPrimary, bgcolor: alpha(colors.primary, 0.08) },
             }}
           >
@@ -118,7 +118,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
               justifyContent: 'center',
               borderRadius: 2,
               border: `1px dashed ${colors.border}`,
-              color: colors.textMuted,
+              color: colors.textSecondary,
               py: 6,
             }}
           >
@@ -164,7 +164,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
                 <BusinessOutlinedIcon sx={{ color: colors.secondary, fontSize: 22, mt: 0.25 }} />
                 <Box flex={1} minWidth={0}>
                   <Field label="Agency name" value={request.agency_name} colors={colors} />
-                  <Typography variant="caption" sx={{ color: colors.textMuted, display: 'block', mt: 0.5 }}>
+                  <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block', mt: 0.5 }}>
                     Code: <Box component="span" sx={{ fontFamily: 'monospace', color: colors.textSecondary }}>{request.agency}</Box>
                   </Typography>
                 </Box>
@@ -217,7 +217,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
                 <Typography
                   variant="caption"
                   sx={{
-                    color: colors.textMuted,
+                    color: colors.textSecondary,
                     textTransform: 'uppercase',
                     letterSpacing: '0.06em',
                     fontSize: '0.65rem',
