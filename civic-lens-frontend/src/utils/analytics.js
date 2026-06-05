@@ -1,3 +1,5 @@
+import { isHighDelayRequest, getRequestDelayBucket } from './mapHelpers';
+
 const MONTH_LABELS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const BOROUGH_CENTERS = {
@@ -26,6 +28,7 @@ const EMPTY_KPIS = {
   avgPredictedHours: 0,
   topComplaintType: '—',
   highRiskCount: 0,
+  highDelayCount: 0,
 };
 
 function safeArray(requests) {
@@ -109,6 +112,7 @@ export function getKpis(requests) {
   const predictedHours = list.map(getRecordPredictedHours);
   const unresolvedCount = list.filter(isUnresolved).length;
   const highRiskCount = list.filter((record) => getRecordRisk(record) >= 0.75).length;
+  const highDelayCount = list.filter(isHighDelayRequest).length;
 
   const complaintCounts = {};
   list.forEach((record) => {
@@ -125,6 +129,7 @@ export function getKpis(requests) {
     avgPredictedHours: round(mean(predictedHours), 2),
     topComplaintType,
     highRiskCount,
+    highDelayCount,
   };
 }
 
@@ -137,10 +142,18 @@ export function getTopComplaints(requests, limit = 12) {
   list.forEach((record) => {
     const type = str(record?.complaint_type, 'Unknown');
     if (!grouped[type]) {
-      grouped[type] = { complaintType: type, count: 0, totalResponseHours: 0 };
+      grouped[type] = {
+        complaintType: type,
+        count: 0,
+        totalResponseHours: 0,
+        unresolvedCount: 0,
+        highDelayCount: 0,
+      };
     }
     grouped[type].count += 1;
     grouped[type].totalResponseHours += getRecordResponseHours(record);
+    grouped[type].unresolvedCount += isUnresolved(record) ? 1 : 0;
+    grouped[type].highDelayCount += isHighDelayRequest(record) ? 1 : 0;
   });
 
   return Object.values(grouped)
@@ -148,6 +161,8 @@ export function getTopComplaints(requests, limit = 12) {
       complaintType: entry.complaintType,
       count: entry.count,
       avgResponseHours: round(entry.totalResponseHours / entry.count, 2),
+      unresolvedRate: round(entry.unresolvedCount / entry.count, 4),
+      highDelayCount: entry.highDelayCount,
     }))
     .sort((a, b) => b.count - a.count)
     .slice(0, limit);
@@ -213,6 +228,7 @@ export function getBoroughStats(requests) {
         totalResponseHours: 0,
         totalPredictedHours: 0,
         unresolvedCount: 0,
+        highDelayCount: 0,
         totalRisk: 0,
       };
     }
@@ -221,6 +237,7 @@ export function getBoroughStats(requests) {
     grouped[borough].totalResponseHours += getRecordResponseHours(record);
     grouped[borough].totalPredictedHours += getRecordPredictedHours(record);
     grouped[borough].unresolvedCount += isUnresolved(record) ? 1 : 0;
+    grouped[borough].highDelayCount += isHighDelayRequest(record) ? 1 : 0;
     grouped[borough].totalRisk += getRecordRisk(record);
   });
 
@@ -229,6 +246,8 @@ export function getBoroughStats(requests) {
     count: entry.count,
     avgResponseHours: round(entry.totalResponseHours / entry.count, 2),
     unresolvedRate: round(entry.unresolvedCount / entry.count, 4),
+    highDelayCount: entry.highDelayCount,
+    highDelayRate: round(entry.highDelayCount / entry.count, 4),
     avgPredictedHours: round(entry.totalPredictedHours / entry.count, 2),
     avgRisk: round(entry.totalRisk / entry.count, 2),
     avgDelayRisk: round(entry.totalRisk / entry.count, 2),
@@ -237,7 +256,7 @@ export function getBoroughStats(requests) {
   const normalizedCounts = normalizeSeries(rawStats.map((entry) => entry.count));
   const normalizedResponse = normalizeSeries(rawStats.map((entry) => entry.avgResponseHours));
   const normalizedUnresolved = normalizeSeries(rawStats.map((entry) => entry.unresolvedRate));
-  const normalizedRisk = normalizeSeries(rawStats.map((entry) => entry.avgRisk));
+  const normalizedHighDelay = normalizeSeries(rawStats.map((entry) => entry.highDelayRate));
 
   return rawStats
     .map((entry, index) => {
@@ -246,7 +265,7 @@ export function getBoroughStats(requests) {
         0.3 * normalizedCounts[index]
         + 0.3 * normalizedResponse[index]
         + 0.25 * normalizedUnresolved[index]
-        + 0.15 * normalizedRisk[index],
+        + 0.15 * normalizedHighDelay[index],
         4,
       );
 
@@ -260,13 +279,17 @@ export function getBoroughStats(requests) {
     .sort((a, b) => b.burdenScore - a.burdenScore);
 }
 
-export function getHotspotPoints(requests, limit = 250) {
+export function getHotspotPoints(requests, limit = 1000) {
   const list = safeArray(requests);
 
-  return list
-    .filter((record) => Number.isFinite(num(record?.latitude)) && Number.isFinite(num(record?.longitude)))
-    .slice(0, limit)
-    .map((record) => ({
+  const valid = list.filter(
+    (record) => Number.isFinite(num(record?.latitude)) && Number.isFinite(num(record?.longitude)),
+  );
+
+  const step = valid.length <= limit ? 1 : Math.ceil(valid.length / limit);
+  const sampled = valid.filter((_, index) => index % step === 0).slice(0, limit);
+
+  return sampled.map((record) => ({
       id: str(record?.unique_key || record?._id),
       latitude: num(record.latitude),
       longitude: num(record.longitude),
@@ -459,6 +482,219 @@ export function formatDate(iso) {
     hour: 'numeric',
     minute: '2-digit',
   });
+}
+
+function scopeToArea(list, area) {
+  if (!isActiveFilter(area)) return list;
+  return list.filter((record) => str(record?.borough) === area);
+}
+
+function topByField(list, field, minCount = 3) {
+  const grouped = {};
+  list.forEach((record) => {
+    const key = str(record?.[field], 'Unknown');
+    if (!grouped[key]) {
+      grouped[key] = { key, count: 0, totalResponseHours: 0, unresolvedCount: 0 };
+    }
+    grouped[key].count += 1;
+    grouped[key].totalResponseHours += getRecordResponseHours(record);
+    grouped[key].unresolvedCount += isUnresolved(record) ? 1 : 0;
+  });
+
+  return Object.values(grouped)
+    .filter((entry) => entry.count >= minCount)
+    .map((entry) => ({
+      key: entry.key,
+      count: entry.count,
+      avgResponseHours: round(entry.totalResponseHours / entry.count, 2),
+      unresolvedRate: round(entry.unresolvedCount / entry.count, 4),
+    }))
+    .sort((a, b) => b.count - a.count);
+}
+
+function buildAreaInsight(areaName, topComplaint, avgResponseHours, unresolvedRate) {
+  if (!areaName || areaName === '—') {
+    return 'Select a borough on the map to see area-specific insights.';
+  }
+  const complaint = topComplaint || 'mixed complaint types';
+  const unresolvedPct = (unresolvedRate * 100).toFixed(1);
+  return `${areaName} shows higher burden mainly because ${complaint} requests have longer response times (${formatHours(avgResponseHours)}) and a ${unresolvedPct}% unresolved rate.`;
+}
+
+export function getSelectedAreaSummary(requests, selectedArea = null) {
+  const list = safeArray(requests);
+  if (!list.length) {
+    return {
+      areaName: '—',
+      isDefault: true,
+      totalRequests: 0,
+      avgResponseHours: 0,
+      unresolvedRate: 0,
+      highDelayCount: 0,
+      topComplaintType: '—',
+      topAgency: '—',
+      insight: 'No requests match the current filters.',
+    };
+  }
+
+  const boroughStats = getBoroughStats(list);
+  const areaName = isActiveFilter(selectedArea)
+    ? selectedArea
+    : boroughStats[0]?.borough ?? '—';
+  const scoped = scopeToArea(list, areaName);
+  const kpis = getKpis(scoped);
+  const complaints = topByField(scoped, 'complaint_type', 1);
+  const agencies = topByField(scoped, 'agency', 1);
+
+  return {
+    areaName,
+    isDefault: !isActiveFilter(selectedArea),
+    totalRequests: kpis.totalRequests,
+    avgResponseHours: kpis.avgResponseHours,
+    unresolvedRate: kpis.unresolvedRate,
+    highDelayCount: kpis.highDelayCount,
+    topComplaintType: complaints[0]?.key ?? '—',
+    topAgency: agencies[0]?.key ?? '—',
+    insight: buildAreaInsight(
+      areaName,
+      complaints[0]?.key,
+      kpis.avgResponseHours,
+      kpis.unresolvedRate,
+    ),
+  };
+}
+
+export function getDashboardDelayDrivers(requests, area = null) {
+  const list = scopeToArea(safeArray(requests), area);
+  if (!list.length) return [];
+
+  const drivers = [];
+
+  const complaints = topByField(list, 'complaint_type', 5);
+  const slowestComplaint = [...complaints].sort((a, b) => b.avgResponseHours - a.avgResponseHours)[0];
+  if (slowestComplaint) {
+    drivers.push({
+      key: 'complaint_delay',
+      label: 'Slowest complaint type',
+      value: slowestComplaint.key,
+      detail: `${formatHours(slowestComplaint.avgResponseHours)} avg · ${slowestComplaint.count.toLocaleString()} requests`,
+      score: slowestComplaint.avgResponseHours,
+    });
+  }
+
+  const agencies = topByField(list, 'agency', 3);
+  const slowestAgency = [...agencies].sort((a, b) => b.avgResponseHours - a.avgResponseHours)[0];
+  if (slowestAgency) {
+    drivers.push({
+      key: 'agency_delay',
+      label: 'Highest-delay agency',
+      value: slowestAgency.key,
+      detail: `${formatHours(slowestAgency.avgResponseHours)} avg workload`,
+      score: slowestAgency.avgResponseHours,
+    });
+  }
+
+  const zipGrouped = {};
+  list.forEach((record) => {
+    const zip = str(record?.incident_zip, 'Unknown');
+    if (!zipGrouped[zip]) zipGrouped[zip] = { total: 0, sum: 0 };
+    zipGrouped[zip].total += 1;
+    zipGrouped[zip].sum += getRecordResponseHours(record);
+  });
+  const slowestZip = Object.entries(zipGrouped)
+    .filter(([, entry]) => entry.total >= 5)
+    .map(([zip, entry]) => ({
+      zip,
+      avgResponseHours: entry.sum / entry.total,
+      count: entry.total,
+    }))
+    .sort((a, b) => b.avgResponseHours - a.avgResponseHours)[0];
+  if (slowestZip) {
+    drivers.push({
+      key: 'zip_delay',
+      label: 'ZIP with longest response',
+      value: slowestZip.zip,
+      detail: `${formatHours(slowestZip.avgResponseHours)} avg · ${slowestZip.count} requests`,
+      score: slowestZip.avgResponseHours,
+    });
+  }
+
+  const unresolvedHeavy = [...complaints].sort((a, b) => b.unresolvedRate - a.unresolvedRate)[0];
+  if (unresolvedHeavy && unresolvedHeavy.unresolvedRate > 0) {
+    drivers.push({
+      key: 'unresolved',
+      label: 'Unresolved-heavy category',
+      value: unresolvedHeavy.key,
+      detail: `${(unresolvedHeavy.unresolvedRate * 100).toFixed(1)}% unresolved`,
+      score: unresolvedHeavy.unresolvedRate,
+    });
+  }
+
+  const monthGrouped = {};
+  list.forEach((record) => {
+    const month = num(record?.month);
+    if (!month) return;
+    if (!monthGrouped[month]) monthGrouped[month] = { total: 0, sum: 0 };
+    monthGrouped[month].total += 1;
+    monthGrouped[month].sum += getRecordResponseHours(record);
+  });
+  const peakMonth = Object.entries(monthGrouped)
+    .map(([month, entry]) => ({
+      month: Number(month),
+      label: MONTH_LABELS[Number(month) - 1] || month,
+      avgResponseHours: entry.sum / entry.total,
+      count: entry.total,
+    }))
+    .sort((a, b) => b.avgResponseHours - a.avgResponseHours)[0];
+  if (peakMonth) {
+    drivers.push({
+      key: 'seasonal',
+      label: 'Peak delay month',
+      value: peakMonth.label,
+      detail: `${formatHours(peakMonth.avgResponseHours)} avg in filtered slice`,
+      score: peakMonth.avgResponseHours,
+    });
+  }
+
+  const workload = mean(list.map((record) => num(record?.agency_workload_24h)));
+  if (workload > 0) {
+    drivers.push({
+      key: 'workload',
+      label: 'Agency workload (24h)',
+      value: `${Math.round(workload)} cases`,
+      detail: 'Mean recent agency workload in slice',
+      score: workload,
+    });
+  }
+
+  return drivers
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
+export function getActualVsPredictedSample(requests, maxPoints = 1500) {
+  const list = safeArray(requests).filter((record) => {
+    const actual = getRecordResponseHours(record);
+    const predicted = getRecordPredictedHours(record);
+    return actual > 0 && predicted > 0;
+  });
+
+  if (!list.length) return [];
+
+  const step = list.length <= maxPoints ? 1 : Math.ceil(list.length / maxPoints);
+  const sampled = list.filter((_, index) => index % step === 0).slice(0, maxPoints);
+
+  return sampled.map((record) => ({
+    id: str(record?.unique_key || record?._id),
+    actual: round(getRecordResponseHours(record), 2),
+    predicted: round(getRecordPredictedHours(record), 2),
+    complaintType: str(record?.complaint_type, 'Unknown'),
+    borough: str(record?.borough, 'Unknown'),
+    agency: str(record?.agency, 'Unknown'),
+    status: str(record?.status, 'Unknown'),
+    bucket: getRequestDelayBucket(record),
+    record,
+  }));
 }
 
 export const filterRequests = applyFilters;

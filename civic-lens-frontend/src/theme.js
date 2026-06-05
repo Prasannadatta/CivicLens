@@ -118,16 +118,20 @@ export function getChartPlotBox(c, mode) {
 export function getChartTooltipBox(c) {
   const isLight = isLightPalette(c);
   return {
-    bgcolor: alpha(c.tooltipBg, 0.98),
-    border: `1px solid ${c.border}`,
-    borderRadius: 10,
-    p: 1.5,
+    bgcolor: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(31, 41, 55, 0.95)',
+    border: isLight ? '1px solid rgba(15, 23, 42, 0.10)' : '1px solid rgba(255, 255, 255, 0.10)',
+    borderRadius: '14px',
+    p: '12px 14px',
     pointerEvents: 'none',
-    zIndex: 5,
-    color: c.textPrimary,
+    zIndex: 10,
+    color: isLight ? '#0f172a' : '#f8fafc',
+    backdropFilter: 'blur(10px)',
+    WebkitBackdropFilter: 'blur(10px)',
     boxShadow: isLight
       ? '0 12px 32px rgba(15, 23, 42, 0.12)'
-      : '0 16px 40px rgba(0, 0, 0, 0.35)',
+      : '0 12px 32px rgba(0, 0, 0, 0.30)',
+    minWidth: 180,
+    maxWidth: 260,
   };
 }
 

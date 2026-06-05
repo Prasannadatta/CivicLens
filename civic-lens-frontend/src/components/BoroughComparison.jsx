@@ -13,6 +13,8 @@ import {
   Tooltip as MuiTooltip,
 } from '@mui/material';
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows';
+import { ChartTooltipPanel } from './ChartTooltip';
+import { getTooltipMetricColors } from '../styles/chartTooltip';
 import {
   ResponsiveContainer,
   RadarChart,
@@ -131,26 +133,16 @@ function RadarTooltip({ active, payload, label, boroughA, boroughB, colors }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload;
 
+  const metric = getTooltipMetricColors(colors);
+
   return (
-    <Box
-      sx={{
-        bgcolor: alpha(colors.tooltipBg, 0.96),
-        border: `1px solid ${alpha(colors.primary, 0.25)}`,
-        borderRadius: 2,
-        p: 1.5,
-        minWidth: 180,
-      }}
-    >
-      <Typography variant="subtitle2" sx={{ color: colors.textPrimary, mb: 0.75 }}>
-        {label}
-      </Typography>
-      <Typography variant="caption" sx={{ display: 'block', color: colors.primary }}>
-        {boroughA}: {Number(row?.rawA ?? 0).toFixed(2)}
-      </Typography>
-      <Typography variant="caption" sx={{ display: 'block', color: colors.secondary }}>
-        {boroughB}: {Number(row?.rawB ?? 0).toFixed(2)}
-      </Typography>
-    </Box>
+    <ChartTooltipPanel
+      title={label}
+      rows={[
+        { label: boroughA, value: Number(row?.rawA ?? 0).toFixed(2), color: metric.spatial },
+        { label: boroughB, value: Number(row?.rawB ?? 0).toFixed(2), color: metric.count },
+      ]}
+    />
   );
 }
 

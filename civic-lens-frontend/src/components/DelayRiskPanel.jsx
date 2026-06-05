@@ -7,6 +7,8 @@ import {
   alpha,
 } from '@mui/material';
 import PsychologyOutlinedIcon from '@mui/icons-material/PsychologyOutlined';
+import { ChartTooltipPanel } from './ChartTooltip';
+import { getTooltipMetricColors } from '../styles/chartTooltip';
 import {
   ResponsiveContainer,
   BarChart,
@@ -57,24 +59,15 @@ function CustomTooltip({ active, payload, colors }) {
   if (!active || !payload?.length) return null;
   const row = payload[0]?.payload;
 
+  const metric = getTooltipMetricColors(colors);
+
   return (
-    <Box
-      sx={{
-        bgcolor: alpha(colors.tooltipBg, 0.96),
-        border: `1px solid ${alpha(colors.primary, 0.25)}`,
-        borderRadius: 2,
-        p: 1.5,
-        minWidth: 180,
-        boxShadow: `0 12px 32px ${alpha('#000', 0.12)}`,
-      }}
-    >
-      <Typography variant="subtitle2" sx={{ color: colors.textPrimary, mb: 0.5 }}>
-        {row?.label}
-      </Typography>
-      <Typography variant="caption" sx={{ color: colors.warning }}>
-        Importance: {(row?.importance * 100).toFixed(1)}%
-      </Typography>
-    </Box>
+    <ChartTooltipPanel
+      title={row?.label}
+      rows={[
+        { label: 'Importance', value: `${(row?.importance * 100).toFixed(1)}%`, color: metric.model },
+      ]}
+    />
   );
 }
 

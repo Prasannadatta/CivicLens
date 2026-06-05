@@ -12,7 +12,9 @@ import {
   alpha,
 } from '@mui/material';
 import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
-import { getChartPlotBox, getChartTooltipBox, getSelectedFilterChipSx } from '../theme';
+import { getChartPlotBox, getSelectedFilterChipSx } from '../theme';
+import ChartTooltip from './ChartTooltip';
+import { getTooltipMetricColors } from '../styles/chartTooltip';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
 import GlassChartCard from './GlassChartCard';
@@ -40,10 +42,9 @@ const LABEL_CENTERS = {
 
 const METRICS = [
   { key: 'burdenScore', label: 'Burden Score', format: (v) => Number(v).toFixed(2) },
-  { key: 'count', label: 'Request Count', format: (v) => Number(v).toLocaleString() },
-  { key: 'avgResponseHours', label: 'Avg Response Hours', format: (v) => formatHours(v) },
+  { key: 'avgResponseHours', label: 'Avg Response Time', format: (v) => formatHours(v) },
   { key: 'unresolvedRate', label: 'Unresolved Rate', format: (v) => `${(Number(v) * 100).toFixed(1)}%` },
-  { key: 'avgRisk', label: 'Avg Risk', format: (v) => Number(v).toFixed(2) },
+  { key: 'count', label: 'Request Volume', format: (v) => Number(v).toLocaleString() },
 ];
 
 function getMetricColors(c) {
@@ -52,7 +53,6 @@ function getMetricColors(c) {
     count: [c.chartScaleLow, c.primary],
     avgResponseHours: [c.chartScaleLow, c.warning],
     unresolvedRate: [c.chartScaleLow, c.error],
-    avgRisk: [c.chartScaleLow, c.error],
   };
 }
 
@@ -106,14 +106,14 @@ export default function ServiceBurdenMap({
   metric: metricProp,
   onMetricChange,
   title = 'Service Burden Map',
-  subtitle = 'Choropleth view of infrastructure stress — darker hues indicate higher burden for the selected metric.',
+  subtitle = 'Highlights areas with higher request volume, slower response, and unresolved cases.',
   plotHeight,
   compactFooter = false,
+  densePlot = false,
 }) {
   const colors = useAppColors();
   const { mode } = useColorMode();
   const chartPlotBox = useMemo(() => getChartPlotBox(colors, mode), [colors, mode]);
-  const chartTooltipBox = useMemo(() => getChartTooltipBox(colors), [colors]);
   const selectedFilterChipSx = useMemo(() => getSelectedFilterChipSx(colors), [colors]);
 
   const svgRef = useRef(null);
@@ -251,7 +251,7 @@ export default function ServiceBurdenMap({
       .duration(650)
       .ease(d3.easeCubicInOut)
       .attr('fill', (d) => colorScale(getMetricValue(d, metric)))
-      .attr('stroke', (d) => (selectedBorough === d.borough ? colors.warning : alpha(colors.textPrimary, 0.28)))
+      .attr('stroke', (d) => (selectedBorough === d.borough ? colors.warning : alpha(colors.secondary, 0.45)))
       .attr('stroke-width', (d) => (selectedBorough === d.borough ? 4 : 1.5))
       .attr('opacity', (d) => (selectedBorough && selectedBorough !== d.borough ? 0.38 : 0.92))
       .attr('filter', (d) => (selectedBorough === d.borough ? 'url(#borough-glow)' : null))
@@ -361,7 +361,11 @@ export default function ServiceBurdenMap({
   }, [stats, selectedBorough, metric, dimensions, metricMeta, onSelectBorough, colors]);
 
   return (
-    <GlassChartCard selected={Boolean(selectedBorough)} accent="dashboard">
+    <GlassChartCard
+      selected={Boolean(selectedBorough)}
+      accent="dashboard"
+      contentSx={densePlot ? { p: '18px 20px' } : undefined}
+    >
       <VizSectionHeader
         icon={MapOutlinedIcon}
         iconColor={colors.warning}
@@ -369,6 +373,7 @@ export default function ServiceBurdenMap({
         subtitle={subtitle}
         tooltip="Burden score blends request volume, response delay, unresolved rate, and risk. Click a borough to filter all panels."
         selected={Boolean(selectedBorough)}
+        compact={densePlot}
         actions={(
           <>
             <FormControl size="small" sx={{ minWidth: 180 }}>
@@ -402,8 +407,13 @@ export default function ServiceBurdenMap({
         ref={containerRef}
         sx={{
           ...chartPlotBox,
+          ...(densePlot && {
+            border: 'none',
+            bgcolor: 'transparent',
+            borderRadius: '12px',
+          }),
           height: plotHeight ?? { xs: 320, sm: 380, md: 420 },
-          mt: 0.5,
+          mt: densePlot ? 0 : 0.5,
           flex: 1,
           minHeight: 0,
           overflow: 'hidden',
@@ -411,36 +421,29 @@ export default function ServiceBurdenMap({
       >
         <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
 
-        {tooltip && (
-          <Box
-            sx={{
-              ...chartTooltipBox,
-              position: 'absolute',
-              left: Math.min(tooltip.x + 14, dimensions.width - 220),
-              top: Math.max(tooltip.y - 12, 8),
-              minWidth: 190,
-            }}
-          >
-            <Typography variant="subtitle2" sx={{ color: colors.textPrimary, mb: 0.5 }}>
-              {tooltip.data.borough}
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-              Count: {tooltip.data.count.toLocaleString()}
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-              Avg response: {formatHours(tooltip.data.avgResponseHours)}
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-              Unresolved: {(tooltip.data.unresolvedRate * 100).toFixed(1)}%
-            </Typography>
-            <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-              Burden score: {tooltip.data.burdenScore.toFixed(2)}
-            </Typography>
-            <Typography variant="caption" sx={{ color: colors.primary, display: 'block', mt: 0.5 }}>
-              {metricMeta.label}: {metricMeta.format(getMetricValue(tooltip.data, metric))}
-            </Typography>
-          </Box>
-        )}
+        {tooltip && (() => {
+          const metric = getTooltipMetricColors(colors);
+          return (
+            <ChartTooltip
+              x={tooltip.x}
+              y={tooltip.y}
+              containerWidth={dimensions.width}
+              containerHeight={dimensions.height}
+              title={tooltip.data.borough}
+              rows={[
+                { label: 'Count', value: tooltip.data.count.toLocaleString(), color: metric.count },
+                { label: 'Avg response', value: formatHours(tooltip.data.avgResponseHours), color: metric.response },
+                { label: 'Unresolved', value: `${(tooltip.data.unresolvedRate * 100).toFixed(1)}%`, color: metric.unresolved },
+                {
+                  label: 'High delay',
+                  value: `${Number(tooltip.data.highDelayCount ?? 0).toLocaleString()} (${((tooltip.data.highDelayRate ?? 0) * 100).toFixed(1)}%)`,
+                  color: metric.highDelay,
+                },
+                { label: 'Burden score', value: tooltip.data.burdenScore.toFixed(2), color: metric.burden },
+              ]}
+            />
+          );
+        })()}
       </Box>
 
       {!compactFooter && (

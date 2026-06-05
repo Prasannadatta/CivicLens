@@ -3,11 +3,11 @@ import { Box } from '@mui/material';
 import PageIntro from '../components/PageIntro';
 import DashboardCompactFilters from '../components/DashboardCompactFilters';
 import DashboardKpis from '../components/DashboardKpis';
-import ServiceBurdenMap from '../components/ServiceBurdenMap';
-import ComplaintTreemap from '../components/ComplaintTreemap';
+import DashboardSectionHeading from '../components/DashboardSectionHeading';
+import ServiceBurdenChoropleth from '../components/ServiceBurdenChoropleth';
+import SelectedAreaInsightPanel from '../components/SelectedAreaInsightPanel';
+import ComplaintTypeRanking from '../components/ComplaintTypeRanking';
 import DelayTimeline from '../components/DelayTimeline';
-import DashboardHotspotPreview from '../components/DashboardHotspotPreview';
-import RequestDetailsDrawer from '../components/RequestDetailsDrawer';
 import { DEFAULT_FILTERS } from '../components/FilterPanel';
 import { mockRequests } from '../data/mockRequests';
 import {
@@ -16,14 +16,17 @@ import {
   getBoroughStats,
   getTopComplaints,
   getMonthlyTimeline,
-  getHotspotPoints,
+  getSelectedAreaSummary,
+  getDashboardDelayDrivers,
 } from '../utils/analytics';
 import {
   PAGE_GRID_GAP,
-  PAGE_SECTION_GAP,
   DASHBOARD_PLOT_HEIGHT_ROW1,
   DASHBOARD_PLOT_HEIGHT_ROW2,
 } from '../styles/dashboardLayout';
+
+const DASHBOARD_SECTION_GAP = '22px';
+const DASHBOARD_BLOCK_GAP = '28px';
 
 const GRID_12 = {
   display: 'grid',
@@ -34,8 +37,6 @@ const GRID_12 = {
 
 export default function DashboardPage() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
 
   const filteredRequests = useMemo(
     () => applyFilters(mockRequests, filters),
@@ -44,12 +45,26 @@ export default function DashboardPage() {
 
   const kpis = useMemo(() => getKpis(filteredRequests), [filteredRequests]);
   const boroughStats = useMemo(() => getBoroughStats(filteredRequests), [filteredRequests]);
-  const topComplaints = useMemo(() => getTopComplaints(filteredRequests, 10), [filteredRequests]);
+  const complaintStats = useMemo(() => getTopComplaints(filteredRequests, 8), [filteredRequests]);
   const timelineData = useMemo(() => getMonthlyTimeline(filteredRequests), [filteredRequests]);
-  const hotspotPoints = useMemo(() => getHotspotPoints(filteredRequests, 1000), [filteredRequests]);
 
   const selectedBorough = filters.borough !== 'All' ? filters.borough : null;
   const selectedComplaint = filters.complaintType !== 'All' ? filters.complaintType : null;
+
+  const effectiveArea = useMemo(() => {
+    if (selectedBorough) return selectedBorough;
+    return boroughStats[0]?.borough ?? null;
+  }, [selectedBorough, boroughStats]);
+
+  const areaSummary = useMemo(
+    () => getSelectedAreaSummary(filteredRequests, selectedBorough),
+    [filteredRequests, selectedBorough],
+  );
+
+  const delayDrivers = useMemo(
+    () => getDashboardDelayDrivers(filteredRequests, effectiveArea),
+    [filteredRequests, effectiveArea],
+  );
 
   const handleFiltersChange = useCallback((next) => {
     setFilters(next);
@@ -73,90 +88,87 @@ export default function DashboardPage() {
     }));
   }, []);
 
-  const handleOpenDrawer = useCallback((request) => {
-    setSelectedRequest(request);
-    setDrawerOpen(true);
-  }, []);
-
-  const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false);
-  }, []);
-
   return (
-    <>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: PAGE_SECTION_GAP,
-        }}
-      >
-        <PageIntro
-          page="dashboard"
-          eyebrow="Citywide Analytics"
-          title="Service Dashboard"
-          description="Explore city-level service burden, complaint composition, delay trends, and hotspot patterns across NYC."
-        />
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: DASHBOARD_BLOCK_GAP,
+      }}
+    >
+      <PageIntro
+        page="dashboard"
+        eyebrow="Citywide Analytics"
+        title="Service Dashboard"
+        description="Explore where service burden is highest, why selected areas stand out, which complaints drive delay and backlog, and how volume and response times change over time."
+      />
 
-        <DashboardCompactFilters
-          requests={mockRequests}
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-          onReset={handleResetFilters}
-        />
+      <DashboardCompactFilters
+        requests={mockRequests}
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+        onReset={handleResetFilters}
+      />
 
-        <DashboardKpis kpis={kpis} showValueSkeleton={!filteredRequests.length} />
+      <DashboardKpis kpis={kpis} showValueSkeleton={!filteredRequests.length} />
+
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: DASHBOARD_SECTION_GAP }}>
+        <DashboardSectionHeading
+          title="Where is service burden highest?"
+          subtitle="Start with geography — identify boroughs with heavier volume, slower response, and unresolved cases."
+        />
 
         <Box sx={GRID_12}>
-          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 7' }, minHeight: 0, display: 'flex' }}>
-            <ServiceBurdenMap
+          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 8' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+            <ServiceBurdenChoropleth
               boroughStats={boroughStats}
               selectedBorough={selectedBorough}
               onSelectBorough={handleBoroughSelect}
-              title="Service Burden Map"
-              subtitle="Borough-level burden by selected metric."
+              title="Borough Burden Overview"
+              subtitle="Compares boroughs using request volume, response delay, unresolved rate, and high-delay share."
               plotHeight={DASHBOARD_PLOT_HEIGHT_ROW1}
               compactFooter
+              densePlot
             />
           </Box>
-          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 5' }, minHeight: 0, display: 'flex' }}>
-            <ComplaintTreemap
-              topComplaints={topComplaints}
-              selectedComplaint={selectedComplaint}
-              onSelectComplaint={handleComplaintSelect}
-              title="Complaint Type Landscape"
-              subtitle="Volume by area, color by average delay."
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW1}
-              compactFooter
-            />
-          </Box>
-        </Box>
-
-        <Box sx={GRID_12}>
-          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 7' }, minHeight: 0, display: 'flex' }}>
-            <DelayTimeline
-              timelineData={timelineData}
-              title="Delay Timeline"
-              subtitle="Monthly volume and response delay."
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
-              compactFooter
-            />
-          </Box>
-          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 5' }, minHeight: 0, display: 'flex' }}>
-            <DashboardHotspotPreview
-              points={hotspotPoints}
-              onSelectRequest={handleOpenDrawer}
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
-            />
+          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 4' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+            <SelectedAreaInsightPanel summary={areaSummary} drivers={delayDrivers} />
           </Box>
         </Box>
       </Box>
 
-      <RequestDetailsDrawer
-        open={drawerOpen}
-        request={selectedRequest}
-        onClose={handleCloseDrawer}
-      />
-    </>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: DASHBOARD_SECTION_GAP }}>
+        <DashboardSectionHeading
+          title="What issues drive delay and backlog?"
+          subtitle="Rank complaint types by volume, response time, and unresolved rate."
+        />
+
+        <Box sx={GRID_12}>
+          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 6' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+            <ComplaintTypeRanking
+              complaintStats={complaintStats}
+              selectedBorough={selectedBorough}
+              selectedComplaint={selectedComplaint}
+              onSelectComplaint={handleComplaintSelect}
+              title="Top Complaint Drivers"
+              subtitle="Ranks complaint types by request volume, delay, and unresolved rate."
+              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
+              compactFooter
+              maxItems={8}
+            />
+          </Box>
+          <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 6' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+            <DelayTimeline
+              timelineData={timelineData}
+              selectedBorough={selectedBorough}
+              title="Delay Trend Over Time"
+              subtitle="Shows how request volume, actual response time, predicted response time, and unresolved rate change by month."
+              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
+              compactFooter
+            />
+          </Box>
+        </Box>
+      </Box>
+    </Box>
   );
 }

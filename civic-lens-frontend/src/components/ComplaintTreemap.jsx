@@ -8,7 +8,9 @@ import {
   alpha,
 } from '@mui/material';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
-import { getChartPlotBox, getChartTooltipBox, getSelectedFilterChipSx } from '../theme';
+import { getChartPlotBox, getSelectedFilterChipSx } from '../theme';
+import ChartTooltip from './ChartTooltip';
+import { getTooltipMetricColors } from '../styles/chartTooltip';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
 import GlassChartCard from './GlassChartCard';
@@ -44,7 +46,6 @@ export default function ComplaintTreemap({
   const colors = useAppColors();
   const { mode } = useColorMode();
   const chartPlotBox = useMemo(() => getChartPlotBox(colors, mode), [colors, mode]);
-  const chartTooltipBox = useMemo(() => getChartTooltipBox(colors), [colors]);
   const selectedFilterChipSx = useMemo(() => getSelectedFilterChipSx(colors), [colors]);
 
   const svgRef = useRef(null);
@@ -300,27 +301,22 @@ export default function ComplaintTreemap({
             <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
           )}
 
-          {tooltip && (
-            <Box
-              sx={{
-                ...chartTooltipBox,
-                position: 'absolute',
-                left: Math.min(tooltip.x + 14, dimensions.width - 220),
-                top: Math.max(tooltip.y - 10, 8),
-                maxWidth: 240,
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ color: colors.textPrimary, fontSize: '0.82rem', mb: 0.5 }}>
-                {tooltip.name}
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-                Count: {tooltip.count.toLocaleString()}
-              </Typography>
-              <Typography variant="caption" sx={{ color: colors.warning }}>
-                Avg response: {formatHours(tooltip.avgResponseHours)}
-              </Typography>
-            </Box>
-          )}
+          {tooltip && (() => {
+            const metric = getTooltipMetricColors(colors);
+            return (
+              <ChartTooltip
+                x={tooltip.x}
+                y={tooltip.y}
+                containerWidth={dimensions.width}
+                containerHeight={dimensions.height}
+                title={tooltip.name}
+                rows={[
+                  { label: 'Requests', value: tooltip.count.toLocaleString(), color: metric.count },
+                  { label: 'Avg response', value: formatHours(tooltip.avgResponseHours), color: metric.response },
+                ]}
+              />
+            );
+          })()}
         </Box>
 
         {!compactFooter && (

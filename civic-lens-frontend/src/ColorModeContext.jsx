@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ThemeProvider } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { createAppTheme, paletteTokens } from './theme';
@@ -35,6 +35,10 @@ export function AppThemeProvider({ children }) {
     () => ({ mode, colors, toggleColorMode }),
     [mode, colors, toggleColorMode],
   );
+
+  useEffect(() => {
+    document.documentElement.dataset.colorMode = mode;
+  }, [mode]);
 
   return (
     <ColorModeContext.Provider value={value}>

@@ -3,6 +3,7 @@ import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
 import { Box, Typography, alpha } from '@mui/material';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
+import { getChartTooltipTextPrimary, getChartTooltipTextSecondary } from '../styles/chartTooltip';
 import {
   buildComplaintTypeColorMap,
   getMapPlotPoints,
@@ -57,21 +58,29 @@ function getMarkerVisuals(request, color, isSelected, themeMode, colors) {
 }
 
 function MapTooltipContent({ request }) {
+  const { mode } = useColorMode();
+  const isLight = mode === 'light';
+  const textPrimary = getChartTooltipTextPrimary(isLight);
+  const textSecondary = getChartTooltipTextSecondary(isLight);
   const bucket = getRequestDelayBucket(request);
+  const rows = [
+    `Borough / ZIP: ${request.borough} · ${request.incident_zip ?? '—'}`,
+    `Agency: ${request.agency}`,
+    `Predicted delay: ${formatHours(request.predicted_response_hours)}`,
+    `Status: ${request.status}`,
+    `Bucket: ${bucket}`,
+  ];
+
   return (
-    <div style={{ minWidth: 160, maxWidth: 220, lineHeight: 1.45 }}>
-      <div style={{ fontWeight: 700, fontSize: '0.78rem', marginBottom: 4 }}>
+    <div style={{ minWidth: 150, maxWidth: 240 }}>
+      <div style={{ fontWeight: 700, fontSize: 14, lineHeight: 1.3, color: textPrimary, marginBottom: 4 }}>
         {request.complaint_type}
       </div>
-      <div style={{ fontSize: '0.72rem' }}>
-        {request.borough} · {request.incident_zip}
-        <br />
-        {request.agency}
-        <br />
-        Predicted: {formatHours(request.predicted_response_hours)}
-        <br />
-        {bucket} · {request.status}
-      </div>
+      {rows.map((row) => (
+        <div key={row} style={{ fontSize: 12, lineHeight: 1.45, color: textSecondary }}>
+          {row}
+        </div>
+      ))}
     </div>
   );
 }
@@ -102,7 +111,7 @@ function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect
         },
       }}
     >
-      <Tooltip direction="top" offset={[0, -6]} opacity={0.95}>
+      <Tooltip direction="top" offset={[0, -8]} opacity={1} className="civic-map-tooltip">
         <MapTooltipContent request={request} />
       </Tooltip>
     </CircleMarker>

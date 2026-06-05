@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import { Box, Typography, alpha } from '@mui/material';
 import ScatterPlotOutlinedIcon from '@mui/icons-material/ScatterPlotOutlined';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
-import { getChartPlotBox, getChartTooltipBox } from '../theme';
+import { isHighDelayRequest } from '../utils/mapHelpers';
+import { getChartPlotBox } from '../theme';
+import ChartTooltip from './ChartTooltip';
+import { getTooltipMetricColors, getTooltipStatusColor } from '../styles/chartTooltip';
 import GlassChartCard from './GlassChartCard';
 import VizSectionHeader from './VizSectionHeader';
 
@@ -25,41 +28,54 @@ function projectPoint(lat, lng, width, height, padding) {
   return [xScale(lng), yScale(lat)];
 }
 
+function isUnresolvedPoint(point) {
+  if (point?.record?.is_unresolved != null) return Number(point.record.is_unresolved) === 1;
+  return point?.status && !/closed/i.test(point.status);
+}
+
+function pointFill(point, colors) {
+  if (isHighDelayRequest(point.record) || isUnresolvedPoint(point)) return colors.error;
+  return colors.warning;
+}
+
 export default function DashboardHotspotPreview({
   points = [],
   onSelectRequest,
-  title = 'Hotspot Preview',
-  subtitle = 'Request-level coordinate preview for spatial clusters.',
-  plotHeight = 310,
+  title = 'Request Hotspots',
+  subtitle = 'Shows coordinate-level clusters of 311 requests under the current filters.',
+  plotHeight = 340,
 }) {
   const colors = useAppColors();
   const { mode } = useColorMode();
+  const isLight = mode === 'light';
   const svgRef = useRef(null);
   const containerRef = useRef(null);
-  const [width, setWidth] = useState(480);
+  const [dimensions, setDimensions] = useState({ width: 480, height: plotHeight });
   const [tooltip, setTooltip] = useState(null);
-  const chartPlotBox = getChartPlotBox(colors, mode);
-  const chartTooltipBox = getChartTooltipBox(colors);
+  const chartPlotBox = useMemo(() => getChartPlotBox(colors, mode), [colors, mode]);
+  const plotBg = isLight ? alpha('#f8fafc', 0.95) : alpha(colors.chartPlotBg, 0.85);
 
   useEffect(() => {
     if (!containerRef.current) return undefined;
     const observer = new ResizeObserver(([entry]) => {
-      const nextWidth = entry.contentRect.width;
-      if (nextWidth > 0) setWidth(nextWidth);
+      const { width, height } = entry.contentRect;
+      if (width > 0 && height > 0) {
+        setDimensions({ width, height: height || plotHeight });
+      }
     });
     observer.observe(containerRef.current);
     return () => observer.disconnect();
-  }, []);
+  }, [plotHeight]);
 
   useEffect(() => {
-    if (!svgRef.current) return;
+    if (!svgRef.current || !points.length) return;
 
-    const height = plotHeight;
+    const { width, height } = dimensions;
     const padding = { top: 14, right: 14, bottom: 18, left: 14 };
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
     svg
-      .attr('width', '100%')
+      .attr('width', width)
       .attr('height', height)
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMidYMid meet');
@@ -68,57 +84,60 @@ export default function DashboardHotspotPreview({
 
     plot
       .append('rect')
+      .attr('class', 'plot-bg')
       .attr('x', padding.left)
       .attr('y', padding.top)
-      .attr('width', width - padding.left - padding.right)
-      .attr('height', height - padding.top - padding.bottom)
+      .attr('width', Math.max(width - padding.left - padding.right, 0))
+      .attr('height', Math.max(height - padding.top - padding.bottom, 0))
       .attr('rx', 8)
-      .attr('fill', colors.chartPlotBg)
+      .attr('fill', plotBg)
       .attr('stroke', colors.border);
 
-    const dots = plot
+    plot
       .selectAll('circle.hotspot')
       .data(points, (d) => d.id)
       .join('circle')
       .attr('class', 'hotspot')
       .attr('cx', (d) => projectPoint(d.latitude, d.longitude, width, height, padding)[0])
       .attr('cy', (d) => projectPoint(d.latitude, d.longitude, width, height, padding)[1])
-      .attr('r', (d) => (d.risk >= 0.75 ? 4.2 : 3))
-      .attr('fill', (d) => {
-        if (d.risk >= 0.75) return colors.error;
-        if (d.status && !/closed/i.test(d.status)) return colors.error;
-        return colors.secondary;
-      })
-      .attr('fill-opacity', 0.72)
-      .attr('stroke', alpha(colors.chartLabel, 0.65))
+      .attr('r', (d) => (isHighDelayRequest(d.record) || isUnresolvedPoint(d) ? 4 : 3.2))
+      .attr('fill', (d) => pointFill(d, colors))
+      .attr('fill-opacity', 0.78)
+      .attr('stroke', alpha(colors.primary, 0.2))
       .attr('stroke-width', 0.6)
       .style('cursor', 'pointer')
       .on('mouseenter', function onEnter(event, d) {
-        d3.select(this).attr('fill-opacity', 1).attr('r', 5.5);
+        d3.select(this)
+          .attr('fill-opacity', 1)
+          .attr('r', 5.5)
+          .attr('stroke', colors.warning)
+          .attr('stroke-width', 2);
         setTooltip({ x: event.offsetX, y: event.offsetY, data: d });
       })
       .on('mousemove', (event) => {
         setTooltip((prev) => (prev ? { ...prev, x: event.offsetX, y: event.offsetY } : prev));
       })
-      .on('mouseleave', function onLeave() {
-        d3.select(this).attr('fill-opacity', 0.72).attr('r', (d) => (d.risk >= 0.75 ? 4.2 : 3));
+      .on('mouseleave', function onLeave(_, d) {
+        d3.select(this)
+          .attr('fill-opacity', 0.78)
+          .attr('r', isHighDelayRequest(d.record) || isUnresolvedPoint(d) ? 4 : 3.2)
+          .attr('stroke', alpha(colors.primary, 0.2))
+          .attr('stroke-width', 0.6);
         setTooltip(null);
       })
       .on('click', (_, d) => {
         if (d.record) onSelectRequest?.(d.record);
       });
-
-    dots.lower();
-  }, [points, width, plotHeight, colors, onSelectRequest]);
+  }, [points, dimensions, plotHeight, colors, plotBg, onSelectRequest]);
 
   return (
-    <GlassChartCard accent="map" contentSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <GlassChartCard accent="dashboard" contentSx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <VizSectionHeader
         icon={ScatterPlotOutlinedIcon}
-        iconColor={colors.secondary}
+        iconColor={colors.warning}
         title={title}
         subtitle={subtitle}
-        tooltip="Cyan = resolved/spatial, red = open or high risk. Click a point for details."
+        tooltip="Gold = typical requests, red = high delay or unresolved. Click a point for details."
       />
 
       <Box
@@ -136,40 +155,44 @@ export default function DashboardHotspotPreview({
         {points.length === 0 ? (
           <Box sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Typography variant="body2" sx={{ color: colors.textSecondary, fontSize: '0.8125rem' }}>
-              No coordinate data for current filters.
+              No valid coordinates for the current filters.
             </Typography>
           </Box>
         ) : (
           <>
             <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
-            {tooltip && (
-              <Box
-                sx={{
-                  ...chartTooltipBox,
-                  position: 'absolute',
-                  left: Math.min(tooltip.x + 12, width - 210),
-                  top: Math.max(tooltip.y - 10, 8),
-                  minWidth: 180,
-                  pointerEvents: 'none',
-                }}
-              >
-                <Typography variant="subtitle2" sx={{ color: colors.textPrimary, fontSize: '0.8rem', mb: 0.35 }}>
-                  {tooltip.data.complaintType}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-                  {tooltip.data.borough} · {tooltip.data.status}
-                </Typography>
-                <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-                  Response: {formatHours(tooltip.data.responseHours)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: colors.warning }}>
-                  Risk: {tooltip.data.risk.toFixed(2)}
-                </Typography>
-              </Box>
-            )}
+            {tooltip && (() => {
+              const metric = getTooltipMetricColors(colors);
+              return (
+                <ChartTooltip
+                  x={tooltip.x}
+                  y={tooltip.y}
+                  containerWidth={dimensions.width}
+                  containerHeight={dimensions.height}
+                  title={tooltip.data.complaintType}
+                  rows={[
+                    {
+                      label: 'Borough / ZIP',
+                      value: `${tooltip.data.borough}${tooltip.data.record?.incident_zip ? ` · ${tooltip.data.record.incident_zip}` : ''}`,
+                      color: metric.spatial,
+                    },
+                    { label: 'Agency', value: tooltip.data.agency, color: metric.neutral },
+                    { label: 'Predicted delay', value: formatHours(tooltip.data.predictedHours), color: metric.predicted },
+                    { label: 'Status', value: tooltip.data.status, color: getTooltipStatusColor(tooltip.data.status, colors) },
+                  ]}
+                />
+              );
+            })()}
           </>
         )}
       </Box>
+
+      <Typography
+        variant="caption"
+        sx={{ display: 'block', mt: 1.25, color: colors.textSecondary, fontSize: '0.75rem' }}
+      >
+        Use the Map page for request-level spatial inspection.
+      </Typography>
     </GlassChartCard>
   );
 }
