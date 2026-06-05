@@ -1,0 +1,14 @@
+export {
+  PAGE_BOTTOM_PADDING,
+  PAGE_GRID_GAP,
+  PAGE_NAV_RESERVE,
+  PAGE_PADDING_X,
+  PAGE_PADDING_Y,
+  PAGE_SECTION_GAP,
+  cardTitleSx,
+} from './modelViewLayout';
+
+export const DASHBOARD_CHART_HEIGHT_ROW1 = 430;
+export const DASHBOARD_CHART_HEIGHT_ROW2 = 400;
+export const DASHBOARD_PLOT_HEIGHT_ROW1 = 340;
+export const DASHBOARD_PLOT_HEIGHT_ROW2 = 310;
