@@ -12,6 +12,8 @@ import {
   cardTitleSx,
 } from '../styles/modelViewLayout';
 import DashboardCard from './DashboardCard';
+import ChartTooltip from './ChartTooltip';
+import { getTooltipMetricColors } from '../styles/chartTooltip';
 
 const FEATURE_LABELS = {
   agency_complaint_median: 'Agency + complaint historical delay',
@@ -369,43 +371,25 @@ export default function ShapExplanationPanel({ request }) {
           >
             <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
             {tooltip && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  left: Math.min(tooltip.x + 14, width - 252),
-                  top: Math.max(tooltip.y - 12, 8),
-                  maxWidth: 248,
-                  p: 1.4,
-                  borderRadius: 2,
-                  bgcolor: alpha(colors.tooltipBg, 0.98),
-                  border: `1px solid ${alpha(tooltip.row.shap >= 0 ? positiveColor : negativeColor, 0.35)}`,
-                  boxShadow: `0 8px 20px ${alpha('#000', 0.14)}`,
-                  pointerEvents: 'none',
-                  zIndex: 3,
-                }}
-              >
-                <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block', fontFamily: 'monospace', fontSize: '0.68rem' }}>
-                  {tooltip.row.feature}
-                </Typography>
-                <Typography variant="body2" sx={{ fontWeight: 800, color: colors.textPrimary, lineHeight: 1.35, mt: 0.35, fontSize: '0.8125rem' }}>
-                  {tooltip.row.label}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{
-                    display: 'block',
-                    fontWeight: 700,
+              <ChartTooltip
+                x={tooltip.x}
+                y={tooltip.y}
+                containerWidth={width}
+                containerHeight={SHAP_CHART_HEIGHT}
+                tooltipWidth={248}
+                tooltipHeight={150}
+                title={tooltip.row.label}
+                subtitle={tooltip.row.feature}
+                rows={[
+                  {
+                    label: 'SHAP value',
+                    value: formatShapValue(tooltip.row.shap),
                     color: tooltip.row.shap >= 0 ? positiveColor : negativeColor,
-                    mt: 0.5,
-                    fontSize: '0.75rem',
-                  }}
-                >
-                  SHAP value: {formatShapValue(tooltip.row.shap)}
-                </Typography>
-                <Typography variant="caption" sx={{ color: colors.textSecondary, display: 'block', mt: 0.6, lineHeight: 1.45, fontSize: '0.75rem' }}>
-                  {plainEnglish(tooltip.row)}
-                </Typography>
-              </Box>
+                    emphasize: true,
+                  },
+                ]}
+                footer={plainEnglish(tooltip.row)}
+              />
             )}
           </Box>
         </>

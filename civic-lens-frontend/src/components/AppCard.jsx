@@ -1,4 +1,4 @@
-import { Box, Typography, Tooltip, Chip, alpha } from '@mui/material';
+import { Box, Typography, Tooltip, Chip, Skeleton, alpha } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
@@ -211,6 +211,79 @@ export function CardHeaderRow({
           ))}
         </Box>
       )}
+    </Box>
+  );
+}
+
+/** Shared KPI/stat card — Dashboard KPIs, Map stats, and similar metric tiles. */
+export function StatCard({
+  accent = 'dashboard',
+  icon: Icon,
+  label,
+  value,
+  showValueSkeleton = false,
+  neutralLabels = false,
+  sx,
+}) {
+  const colors = useAppColors();
+  const accentColor = resolveAppAccent(accent, colors);
+  const labelColor = neutralLabels ? colors.textPrimary : accentColor;
+
+  return (
+    <Box
+      sx={{
+        width: '100%',
+        height: '100%',
+        p: '22px',
+        borderRadius: '22px',
+        bgcolor: colors.cardSurface,
+        border: `1px solid ${colors.border}`,
+        boxShadow: colors.cardShadow,
+        boxSizing: 'border-box',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
+        minHeight: 112,
+        ...sx,
+      }}
+    >
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0, mb: 1.5 }}>
+        {Icon && (
+          <AppCardIconPill icon={Icon} accentColor={accentColor} colors={colors} size="sm" />
+        )}
+        <Typography
+          noWrap
+          sx={{
+            color: labelColor,
+            fontWeight: 700,
+            fontSize: '0.75rem',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            lineHeight: 1.25,
+            minWidth: 0,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+        >
+          {label}
+        </Typography>
+      </Box>
+      <Typography
+        component="p"
+        sx={{
+          fontWeight: 800,
+          color: colors.textPrimary,
+          fontSize: '1.25rem',
+          letterSpacing: '-0.02em',
+          lineHeight: 1.1,
+        }}
+      >
+        {showValueSkeleton ? (
+          <Skeleton variant="rounded" width="60%" height={26} />
+        ) : (
+          value
+        )}
+      </Typography>
     </Box>
   );
 }

@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { Grid, Typography, Box, alpha, Skeleton, Tooltip } from '@mui/material';
+import { Grid, Typography, Box, alpha, Skeleton } from '@mui/material';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
@@ -9,15 +9,6 @@ import CategoryOutlinedIcon from '@mui/icons-material/CategoryOutlined';
 import { formatHours } from '../utils/analytics';
 import { useAppColors } from '../ColorModeContext';
 import DashboardCard from './DashboardCard';
-
-const KPI_TOOLTIPS = {
-  totalRequests: 'Count of 311 requests in the current filter slice.',
-  avgResponseHours: 'Mean hours from creation to closure (or last update for open cases).',
-  unresolvedRate: 'Share of requests not yet closed in this slice.',
-  avgPredictedHours: 'Mean model-estimated hours to resolve (mock heuristic).',
-  highRiskCount: 'Requests with delay risk score ≥ 0.75 in this slice.',
-  topComplaintType: 'Most frequent complaint type in the filtered dataset.',
-};
 
 const defaultKpis = {
   totalRequests: 0,
@@ -91,9 +82,8 @@ export default function KPICards({ kpis = defaultKpis, showValueSkeleton = false
 
         return (
           <Grid key={card.key} size={{ xs: 6, sm: 4, lg: 4, xl: 2 }}>
-            <Tooltip title={KPI_TOOLTIPS[card.key] || ''} arrow placement="top">
-              <Box component="span" sx={{ display: 'block', height: '100%' }}>
-                <DashboardCard
+            <Box component="span" sx={{ display: 'block', height: '100%' }}>
+              <DashboardCard
                   hover
                   selectedColor={card.accent}
                   contentSx={{ p: 1.9, '&:last-child': { pb: 1.9 } }}
@@ -163,9 +153,8 @@ export default function KPICards({ kpis = defaultKpis, showValueSkeleton = false
                       value
                     )}
                   </Typography>
-                </DashboardCard>
-              </Box>
-            </Tooltip>
+              </DashboardCard>
+            </Box>
           </Grid>
         );
       })}

@@ -13,7 +13,9 @@ import {
   Tooltip,
 } from '@mui/material';
 import ScatterPlotIcon from '@mui/icons-material/ScatterPlot';
-import { getChartColors, getChartPlotBox, getChartTooltipBox, getSelectedFilterChipSx } from '../theme';
+import { getChartColors, getChartPlotBox, getSelectedFilterChipSx } from '../theme';
+import ChartTooltip from './ChartTooltip';
+import { getTooltipMetricColors, getTooltipStatusColor } from '../styles/chartTooltip';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
 import GlassChartCard from './GlassChartCard';
@@ -56,7 +58,6 @@ export default function HotspotExplorer({
   const { mode } = useColorMode();
   const chartColors = useMemo(() => getChartColors(colors), [colors]);
   const chartPlotBox = useMemo(() => getChartPlotBox(colors, mode), [colors, mode]);
-  const chartTooltipBox = useMemo(() => getChartTooltipBox(colors), [colors]);
   const selectedFilterChipSx = useMemo(() => getSelectedFilterChipSx(colors), [colors]);
 
   const svgRef = useRef(null);
@@ -315,30 +316,23 @@ export default function HotspotExplorer({
             <svg ref={svgRef} style={{ width: '100%', height: '100%', display: 'block' }} />
           )}
 
-          {tooltip && (
-            <Box
-              sx={{
-                ...chartTooltipBox,
-                position: 'absolute',
-                left: Math.min(tooltip.x + 14, dimensions.width - 230),
-                top: Math.max(tooltip.y - 10, 8),
-                maxWidth: 240,
-              }}
-            >
-              <Typography variant="subtitle2" sx={{ color: colors.textPrimary, fontSize: '0.82rem' }}>
-                {tooltip.point.complaintType}
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-                Borough: {tooltip.point.borough}
-              </Typography>
-              <Typography variant="caption" sx={{ display: 'block', color: colors.textSecondary }}>
-                Response: {formatHours(getResponseHours(tooltip.point))}
-              </Typography>
-              <Typography variant="caption" sx={{ color: colors.warning }}>
-                Status: {tooltip.point.status}
-              </Typography>
-            </Box>
-          )}
+          {tooltip && (() => {
+            const metric = getTooltipMetricColors(colors);
+            return (
+              <ChartTooltip
+                x={tooltip.x}
+                y={tooltip.y}
+                containerWidth={dimensions.width}
+                containerHeight={dimensions.height}
+                title={tooltip.point.complaintType}
+                rows={[
+                  { label: 'Borough', value: tooltip.point.borough, color: metric.spatial },
+                  { label: 'Response', value: formatHours(getResponseHours(tooltip.point)), color: metric.response },
+                  { label: 'Status', value: tooltip.point.status, color: getTooltipStatusColor(tooltip.point.status, colors) },
+                ]}
+              />
+            );
+          })()}
         </Box>
 
         <Stack spacing={1.25} sx={{ mt: 1.5 }}>

@@ -10,6 +10,7 @@ export default function VizSectionHeader({
   chips = [],
   actions = null,
   selected = false,
+  compact = false,
 }) {
   const colors = useAppColors();
   const resolvedIconColor = iconColor ?? colors.primary;
@@ -24,7 +25,9 @@ export default function VizSectionHeader({
       chips={chips}
       actions={actions}
       selected={selected}
+      compact={compact}
       colors={colors}
+      sx={{ mb: compact ? 0.75 : 1.25 }}
     />
   );
 }

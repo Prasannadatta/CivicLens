@@ -14,7 +14,7 @@ function truncateLabel(text, max = 22) {
 
 function LegendItem({ color, label, colors }) {
   return (
-    <Stack direction="row" spacing={0.75} alignItems="center">
+    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
       <Box
         sx={{
           width: 9,
