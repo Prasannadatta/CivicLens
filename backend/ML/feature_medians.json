@@ -1,0 +1,19 @@
+{
+  "agency_complaint_median": 1.7903,
+  "agency_complaint_volume": 148513.0,
+  "agency_dow_median": 1.3819,
+  "agency_median_hours": 1.2917,
+  "agency_unresolved": 0.0,
+  "agency_volume": 1249723.0,
+  "agency_workload_24h": 4383.0,
+  "agency_workload_7d": 23664.0,
+  "agency_zip_median": 2.8803,
+  "borough_complaint_median": 2.0156,
+  "complaint_median_hours": 1.7903,
+  "day_of_week": 3.0,
+  "hour": 13.0,
+  "is_holiday": 0.0,
+  "is_weekend": 0.0,
+  "month": 6.0,
+  "urgency_score": 0.0
+}
