@@ -13,11 +13,9 @@ import {
 } from '@mui/material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useAppColors } from '../ColorModeContext';
-import {
-  DEFAULT_MAP_FILTERS,
-  DELAY_BUCKET_LABELS,
-  deriveFilterOptions,
-} from '../utils/mapHelpers';
+import { DEFAULT_FILTERS } from '../context/FilterContext';
+import { DELAY_BUCKET_LABELS } from '../utils/mapHelpers';
+import { facetToOptions, facetToOptionsWithSelection } from '../utils/facetOptions';
 import {
   filterRowGridSx,
   filterSecondaryRowSx,
@@ -30,18 +28,18 @@ import {
 
 const FILTER_KEYS = [
   { key: 'borough', field: 'borough', label: 'Borough' },
-  { key: 'complaintType', field: 'complaint_type', label: 'Complaint Type' },
+  { key: 'complaint_type', field: 'complaint_type', label: 'Complaint Type' },
   { key: 'agency', field: 'agency', label: 'Agency' },
-  { key: 'delayBucket', field: null, label: 'Delay Bucket', staticOptions: ['All', ...DELAY_BUCKET_LABELS] },
+  { key: 'delay_bucket', field: null, label: 'Delay Bucket', staticOptions: ['All', ...DELAY_BUCKET_LABELS] },
   { key: 'status', field: 'status', label: 'Status' },
 ];
 
 export default function MapControlPanel({
-  requests = [],
-  filters = DEFAULT_MAP_FILTERS,
+  facets = {},
+  filters = DEFAULT_FILTERS,
   colorMode = 'delayBucket',
   highDelayOnly = false,
-  onFiltersChange,
+  onFilterChange,
   onColorModeChange,
   onHighDelayOnlyChange,
   onReset,
@@ -51,13 +49,14 @@ export default function MapControlPanel({
   const optionsByKey = useMemo(() => {
     const map = {};
     FILTER_KEYS.forEach(({ key, field, staticOptions }) => {
-      map[key] = staticOptions ?? deriveFilterOptions(requests, field);
+      map[key] = staticOptions
+        ?? facetToOptionsWithSelection(facets, field, filters[key]);
     });
     return map;
-  }, [requests]);
+  }, [facets, filters]);
 
-  const handleChange = (field) => (event) => {
-    onFiltersChange?.({ ...filters, [field]: event.target.value });
+  const handleChange = (key) => (event) => {
+    onFilterChange?.(key, event.target.value);
   };
 
   return (

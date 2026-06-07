@@ -65,26 +65,49 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
   const risk = Number(request?.delay_risk_score);
   const highRisk = Number.isFinite(risk) && risk > 0.7;
 
+  const panelPaperSx = {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    height: '100vh',
+    width: { xs: '88vw', md: '33vw' },
+    minWidth: { md: 360 },
+    maxWidth: { xs: '90vw', md: 480 },
+    flex: '0 0 auto',
+    boxSizing: 'border-box',
+    background: `linear-gradient(165deg, ${alpha(colors.tooltipBg, 0.98)} 0%, ${colors.background} 45%, ${alpha(colors.background, 0.99)} 100%)`,
+    backdropFilter: 'blur(20px)',
+    borderLeft: `1px solid ${colors.border}`,
+    boxShadow: `-12px 0 40px ${alpha('#000', 0.15)}`,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  };
+
   return (
     <Drawer
       anchor="right"
       open={open}
       onClose={onClose}
       slotProps={{
-        backdrop: { sx: { bgcolor: alpha('#000', 0.55) } },
-      }}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', sm: 440 },
-          maxWidth: '100vw',
-          background: `linear-gradient(165deg, ${alpha(colors.tooltipBg, 0.98)} 0%, ${colors.background} 45%, ${alpha(colors.background, 0.99)} 100%)`,
-          backdropFilter: 'blur(20px)',
-          borderLeft: `1px solid ${colors.border}`,
-          boxShadow: `-12px 0 40px ${alpha('#000', 0.15)}`,
-        },
+        backdrop: { sx: { bgcolor: alpha('#000', 0.28) } },
+        paper: { sx: panelPaperSx },
       }}
     >
-      <Box sx={{ p: { xs: 2.5, sm: 3 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          p: { xs: 2.5, sm: 3 },
+          width: '100%',
+          maxWidth: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+          minWidth: 0,
+          overflow: 'hidden',
+          boxSizing: 'border-box',
+        }}
+      >
         <Stack direction="row" spacing={1} sx={{ justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
           <Box sx={{ minWidth: 0 }}>
             <Typography
@@ -99,7 +122,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
           </Box>
           <IconButton
             onClick={onClose}
-            aria-label="Close drawer"
+            aria-label="Close record details"
             sx={{
               color: colors.textSecondary,
               '&:hover': { color: colors.textPrimary, bgcolor: alpha(colors.primary, 0.08) },
@@ -125,7 +148,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
             <Typography variant="body2">No request selected.</Typography>
           </Box>
         ) : (
-          <>
+          <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}>
             <Stack direction="row" spacing={0.75} useFlexGap sx={{ flexWrap: 'wrap', mb: 2 }}>
               <Chip
                 size="small"
@@ -157,7 +180,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
 
             <Divider sx={{ borderColor: colors.border, mb: 2 }} />
 
-            <Stack spacing={2} sx={{ flex: 1, overflow: 'auto', pr: 0.5 }}>
+            <Stack spacing={2}>
               <Field label="Unique key" value={request.unique_key} mono colors={colors} />
 
               <Stack direction="row" spacing={1} sx={{ alignItems: 'flex-start' }}>
@@ -242,7 +265,7 @@ export default function RequestDetailsDrawer({ request, open, onClose }) {
                 </Typography>
               </Box>
             </Stack>
-          </>
+          </Box>
         )}
       </Box>
     </Drawer>

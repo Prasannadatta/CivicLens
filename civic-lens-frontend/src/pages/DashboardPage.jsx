@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from 'react';
+import { useMemo, useCallback } from 'react';
 import { Box } from '@mui/material';
 import PageIntro from '../components/PageIntro';
 import DashboardCompactFilters from '../components/DashboardCompactFilters';
@@ -8,17 +8,12 @@ import ServiceBurdenChoropleth from '../components/ServiceBurdenChoropleth';
 import SelectedAreaInsightPanel from '../components/SelectedAreaInsightPanel';
 import ComplaintTypeRanking from '../components/ComplaintTypeRanking';
 import DelayTimeline from '../components/DelayTimeline';
-import { DEFAULT_FILTERS } from '../components/FilterPanel';
-import { mockRequests } from '../data/mockRequests';
-import {
-  applyFilters,
-  getKpis,
-  getBoroughStats,
-  getTopComplaints,
-  getMonthlyTimeline,
-  getSelectedAreaSummary,
-  getDashboardDelayDrivers,
-} from '../utils/analytics';
+import ChartLoadingOverlay from '../components/ChartLoadingOverlay';
+import { DataEmptyState, DataErrorState } from '../components/DataFetchStatus';
+import { useFilters } from '../context/FilterContext';
+import useCascadingFacets from '../hooks/useCascadingFacets';
+import useDashboardData from '../hooks/useDashboardData';
+import { buildAreaSummary, buildDelayDrivers } from '../utils/areaInsight';
 import {
   PAGE_GRID_GAP,
   DASHBOARD_PLOT_HEIGHT_ROW1,
@@ -35,58 +30,74 @@ const GRID_12 = {
   alignItems: 'stretch',
 };
 
+const EMPTY_KPIS = {
+  totalRequests: 0,
+  avgResponseHours: 0,
+  unresolvedRate: 0,
+  highDelayCount: 0,
+};
+
 export default function DashboardPage() {
-  const [filters, setFilters] = useState(DEFAULT_FILTERS);
+  const { filters, handleFilterChange, resetFilters } = useFilters();
+  const { facets } = useCascadingFacets(filters);
+  const { data, loading, error } = useDashboardData(filters);
 
-  const filteredRequests = useMemo(
-    () => applyFilters(mockRequests, filters),
-    [filters],
-  );
+  const statsData = data?.stats ?? null;
+  const boroughStats = data?.boroughBurden?.boroughs ?? [];
+  const complaintStats = data?.complaintDrivers?.complaints ?? [];
+  const timelineData = data?.delayTrend?.timeline ?? [];
 
-  const kpis = useMemo(() => getKpis(filteredRequests), [filteredRequests]);
-  const boroughStats = useMemo(() => getBoroughStats(filteredRequests), [filteredRequests]);
-  const complaintStats = useMemo(() => getTopComplaints(filteredRequests, 8), [filteredRequests]);
-  const timelineData = useMemo(() => getMonthlyTimeline(filteredRequests), [filteredRequests]);
+  const kpis = statsData ?? EMPTY_KPIS;
+  const hasData = Boolean(data);
+  const showLoadingOverlay = loading && hasData;
+  const showKpiSkeleton = loading && !hasData;
 
   const selectedBorough = filters.borough !== 'All' ? filters.borough : null;
-  const selectedComplaint = filters.complaintType !== 'All' ? filters.complaintType : null;
-
-  const effectiveArea = useMemo(() => {
-    if (selectedBorough) return selectedBorough;
-    return boroughStats[0]?.borough ?? null;
-  }, [selectedBorough, boroughStats]);
+  const selectedComplaint = filters.complaint_type !== 'All' ? filters.complaint_type : null;
 
   const areaSummary = useMemo(
-    () => getSelectedAreaSummary(filteredRequests, selectedBorough),
-    [filteredRequests, selectedBorough],
+    () => buildAreaSummary(filters, boroughStats, complaintStats, kpis),
+    [filters, boroughStats, complaintStats, kpis],
   );
 
   const delayDrivers = useMemo(
-    () => getDashboardDelayDrivers(filteredRequests, effectiveArea),
-    [filteredRequests, effectiveArea],
+    () => buildDelayDrivers(complaintStats),
+    [complaintStats],
   );
 
-  const handleFiltersChange = useCallback((next) => {
-    setFilters(next);
-  }, []);
-
-  const handleResetFilters = useCallback(() => {
-    setFilters(DEFAULT_FILTERS);
-  }, []);
-
   const handleBoroughSelect = useCallback((borough) => {
-    setFilters((prev) => ({
-      ...prev,
-      borough: borough || 'All',
-    }));
-  }, []);
+    handleFilterChange('borough', borough || 'All');
+  }, [handleFilterChange]);
 
   const handleComplaintSelect = useCallback((complaint) => {
-    setFilters((prev) => ({
-      ...prev,
-      complaintType: complaint || 'All',
-    }));
-  }, []);
+    handleFilterChange('complaint_type', complaint || 'All');
+  }, [handleFilterChange]);
+
+  const isEmpty = !loading && hasData && kpis.totalRequests === 0;
+
+  if (error && !hasData) {
+    return <DataErrorState error={error} />;
+  }
+
+  if (isEmpty) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: DASHBOARD_BLOCK_GAP }}>
+        <PageIntro
+          page="dashboard"
+          eyebrow="Citywide Analytics"
+          title="Service Dashboard"
+          description="Explore where service burden is highest, why selected areas stand out, which complaints drive delay and backlog, and how volume and response times change over time."
+        />
+        <DashboardCompactFilters
+          facets={facets}
+          filters={filters}
+          onFilterChange={handleFilterChange}
+          onReset={resetFilters}
+        />
+        <DataEmptyState message="No requests match the current filters." />
+      </Box>
+    );
+  }
 
   return (
     <Box
@@ -104,13 +115,13 @@ export default function DashboardPage() {
       />
 
       <DashboardCompactFilters
-        requests={mockRequests}
+        facets={facets}
         filters={filters}
-        onFiltersChange={handleFiltersChange}
-        onReset={handleResetFilters}
+        onFilterChange={handleFilterChange}
+        onReset={resetFilters}
       />
 
-      <DashboardKpis kpis={kpis} showValueSkeleton={!filteredRequests.length} />
+      <DashboardKpis kpis={kpis} loading={showKpiSkeleton} />
 
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: DASHBOARD_SECTION_GAP }}>
         <DashboardSectionHeading
@@ -120,19 +131,23 @@ export default function DashboardPage() {
 
         <Box sx={GRID_12}>
           <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 8' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
-            <ServiceBurdenChoropleth
-              boroughStats={boroughStats}
-              selectedBorough={selectedBorough}
-              onSelectBorough={handleBoroughSelect}
-              title="Borough Burden Overview"
-              subtitle="Compares boroughs using request volume, response delay, unresolved rate, and high-delay share."
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW1}
-              compactFooter
-              densePlot
-            />
+            <ChartLoadingOverlay loading={showLoadingOverlay}>
+              <ServiceBurdenChoropleth
+                boroughStats={boroughStats}
+                selectedBorough={selectedBorough}
+                onSelectBorough={handleBoroughSelect}
+                title="Borough Burden Overview"
+                subtitle="Compares boroughs using request volume, response delay, unresolved rate, and high-delay share."
+                plotHeight={DASHBOARD_PLOT_HEIGHT_ROW1}
+                compactFooter
+                densePlot
+              />
+            </ChartLoadingOverlay>
           </Box>
           <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 4' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
-            <SelectedAreaInsightPanel summary={areaSummary} drivers={delayDrivers} />
+            <ChartLoadingOverlay loading={showLoadingOverlay}>
+              <SelectedAreaInsightPanel summary={areaSummary} drivers={delayDrivers} />
+            </ChartLoadingOverlay>
           </Box>
         </Box>
       </Box>
@@ -145,27 +160,31 @@ export default function DashboardPage() {
 
         <Box sx={GRID_12}>
           <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 6' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
-            <ComplaintTypeRanking
-              complaintStats={complaintStats}
-              selectedBorough={selectedBorough}
-              selectedComplaint={selectedComplaint}
-              onSelectComplaint={handleComplaintSelect}
-              title="Top Complaint Drivers"
-              subtitle="Ranks complaint types by request volume, delay, and unresolved rate."
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
-              compactFooter
-              maxItems={8}
-            />
+            <ChartLoadingOverlay loading={showLoadingOverlay}>
+              <ComplaintTypeRanking
+                complaintStats={complaintStats}
+                selectedBorough={selectedBorough}
+                selectedComplaint={selectedComplaint}
+                onSelectComplaint={handleComplaintSelect}
+                title="Top Complaint Drivers"
+                subtitle="Ranks complaint types by request volume, delay, and unresolved rate."
+                plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
+                compactFooter
+                maxItems={8}
+              />
+            </ChartLoadingOverlay>
           </Box>
           <Box sx={{ gridColumn: { xs: '1 / -1', lg: 'span 6' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
-            <DelayTimeline
-              timelineData={timelineData}
-              selectedBorough={selectedBorough}
-              title="Delay Trend Over Time"
-              subtitle="Shows how request volume, actual response time, predicted response time, and unresolved rate change by month."
-              plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
-              compactFooter
-            />
+            <ChartLoadingOverlay loading={showLoadingOverlay}>
+              <DelayTimeline
+                timelineData={timelineData}
+                selectedBorough={selectedBorough}
+                title="Delay Trend Over Time"
+                subtitle="Shows how request volume, actual response time, predicted response time, and unresolved rate change by month."
+                plotHeight={DASHBOARD_PLOT_HEIGHT_ROW2}
+                compactFooter
+              />
+            </ChartLoadingOverlay>
           </Box>
         </Box>
       </Box>

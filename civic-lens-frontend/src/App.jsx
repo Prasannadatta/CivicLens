@@ -4,6 +4,7 @@ import HomePage from './pages/HomePage';
 import ModelPage from './pages/ModelPage';
 import DashboardPage from './pages/DashboardPage';
 import MapPage from './pages/MapPage';
+import { FilterProvider } from './context/FilterContext';
 
 export default function App() {
   const [view, setView] = useState('home');
@@ -15,7 +16,7 @@ export default function App() {
       case 'dashboard':
         return <DashboardPage onNavigate={setView} />;
       case 'map':
-        return <MapPage />;
+        return <MapPage onNavigate={setView} />;
       case 'home':
       default:
         return <HomePage onNavigate={setView} />;
@@ -23,8 +24,10 @@ export default function App() {
   };
 
   return (
-    <AppLayout currentView={view} onNavigate={setView}>
-      {renderPage()}
-    </AppLayout>
+    <FilterProvider>
+      <AppLayout currentView={view} onNavigate={setView}>
+        {renderPage()}
+      </AppLayout>
+    </FilterProvider>
   );
 }

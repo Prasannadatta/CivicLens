@@ -244,7 +244,7 @@ export default function DelayRiskPanel({
                 tickLine={false}
               />
               <Tooltip content={<CustomTooltip colors={colors} />} cursor={{ fill: alpha(colors.primary, 0.06) }} />
-              <Bar dataKey="importancePct" name="Importance" radius={[0, 6, 6, 0]} barSize={16}>
+              <Bar dataKey="importancePct" name="Importance" radius={[0, 6, 6, 0]} barSize={16} isAnimationActive={false}>
                 {chartData.map((entry, index) => (
                   <Cell key={entry.feature} fill={chartColors[index % chartColors.length]} />
                 ))}

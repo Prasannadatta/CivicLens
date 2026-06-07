@@ -1,5 +1,5 @@
 import { useMemo, useCallback } from 'react';
-import { MapContainer, TileLayer, CircleMarker, Tooltip } from 'react-leaflet';
+import { MapContainer, TileLayer, CircleMarker, Tooltip, Popup } from 'react-leaflet';
 import { Box, Typography, alpha } from '@mui/material';
 import { useAppColors, useColorMode } from '../ColorModeContext';
 import { formatHours } from '../utils/analytics';
@@ -9,7 +9,8 @@ import {
   getMapPlotPoints,
   getMarkerColor,
   getMarkerRadius,
-  getRequestDelayBucket,
+  getBucket,
+  isOpenRequest,
 } from '../utils/mapHelpers';
 import MapLegend from './MapLegend';
 import AppCard from './AppCard';
@@ -32,7 +33,7 @@ const BASEMAP_TILES = {
 // react-leaflet GeoJSON — color #2563eb, weight 1.2, opacity 0.65, fillOpacity 0.02.
 
 function isHighDelayMarker(request) {
-  const bucket = getRequestDelayBucket(request);
+  const bucket = getBucket(request);
   return bucket === '3–7 Days' || bucket === 'More than 1 Week';
 }
 
@@ -57,12 +58,13 @@ function getMarkerVisuals(request, color, isSelected, themeMode, colors) {
   };
 }
 
-function MapTooltipContent({ request }) {
+function MapRequestSummary({ request, onViewModelDetails, showModelLink = false }) {
   const { mode } = useColorMode();
   const isLight = mode === 'light';
   const textPrimary = getChartTooltipTextPrimary(isLight);
   const textSecondary = getChartTooltipTextSecondary(isLight);
-  const bucket = getRequestDelayBucket(request);
+  const linkColor = isLight ? '#2563eb' : '#60a5fa';
+  const bucket = getBucket(request) ?? '—';
   const rows = [
     `Borough / ZIP: ${request.borough} · ${request.incident_zip ?? '—'}`,
     `Agency: ${request.agency}`,
@@ -81,11 +83,31 @@ function MapTooltipContent({ request }) {
           {row}
         </div>
       ))}
+      {showModelLink && isOpenRequest(request) ? (
+        <button
+          type="button"
+          onClick={() => onViewModelDetails?.(request)}
+          style={{
+            marginTop: 10,
+            padding: 0,
+            border: 'none',
+            background: 'none',
+            color: linkColor,
+            fontSize: 12,
+            fontWeight: 700,
+            cursor: 'pointer',
+            textDecoration: 'underline',
+            fontFamily: 'inherit',
+          }}
+        >
+          View model details
+        </button>
+      ) : null}
     </div>
   );
 }
 
-function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect }) {
+function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect, onViewModelDetails }) {
   const lat = Number(request.latitude);
   const lng = Number(request.longitude);
   const { radius, pathOptions, hoverFillOpacity, restFillOpacity } = getMarkerVisuals(
@@ -102,7 +124,10 @@ function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect
       radius={radius}
       pathOptions={pathOptions}
       eventHandlers={{
-        click: () => onSelect?.(request),
+        click: (e) => {
+          onSelect?.(request);
+          e.target.openPopup();
+        },
         mouseover: (e) => {
           e.target.setStyle({ fillOpacity: hoverFillOpacity });
         },
@@ -112,8 +137,15 @@ function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect
       }}
     >
       <Tooltip direction="top" offset={[0, -8]} opacity={1} className="civic-map-tooltip">
-        <MapTooltipContent request={request} />
+        <MapRequestSummary request={request} />
       </Tooltip>
+      <Popup closeButton className="civic-map-popup" offset={[0, -8]}>
+        <MapRequestSummary
+          request={request}
+          showModelLink
+          onViewModelDetails={onViewModelDetails}
+        />
+      </Popup>
     </CircleMarker>
   );
 }
@@ -123,6 +155,7 @@ export default function NYCRequestMap({
   colorMode = 'delayBucket',
   selectedRequestId = null,
   onSelectRequest,
+  onViewModelDetails,
 }) {
   const colors = useAppColors();
   const { mode } = useColorMode();
@@ -230,6 +263,7 @@ export default function NYCRequestMap({
                   themeMode={mode}
                   colors={colors}
                   onSelect={handleSelect}
+                  onViewModelDetails={onViewModelDetails}
                 />
               );
             })}

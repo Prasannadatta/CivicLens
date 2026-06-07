@@ -1,6 +1,5 @@
-import { useMemo, useState, useCallback, useEffect } from 'react';
-import { Box, Alert, alpha } from '@mui/material';
-import { DEFAULT_FILTERS } from '../components/FilterPanel';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Box } from '@mui/material';
 import RequestDetailsDrawer from '../components/RequestDetailsDrawer';
 import PredictionCaseSelector from '../components/PredictionCaseSelector';
 import PredictionOverviewCard from '../components/PredictionOverviewCard';
@@ -8,10 +7,9 @@ import ShapExplanationPanel from '../components/ShapExplanationPanel';
 import ModelFeatureTable from '../components/ModelFeatureTable';
 import RequestLocationPreview from '../components/RequestLocationPreview';
 import PageIntro from '../components/PageIntro';
-import { mockRequests } from '../data/mockRequests';
-import { useAppColors } from '../ColorModeContext';
-import { applyFilters } from '../utils/analytics';
-import { getDemoCases } from '../utils/mlExplanation';
+import { DataEmptyState, DataErrorState, DataLoadingState } from '../components/DataFetchStatus';
+import { useFilters } from '../context/FilterContext';
+import { fetchRequestById } from '../api/requests';
 import {
   PAGE_GRID_GAP,
   PAGE_SECTION_GAP,
@@ -24,47 +22,75 @@ const GRID_12 = {
   alignItems: 'stretch',
 };
 
-const SHOWCASE_HIGH_DELAY_KEY = '61999001';
-
-function pickDefaultCase(requests) {
-  if (!requests?.length) return null;
-  return (
-    requests.find((r) => r.unique_key === SHOWCASE_HIGH_DELAY_KEY)
-    ?? requests.find((r) => r.prediction_risk_level === 'High' || r.prediction_risk_level === 'Critical')
-    ?? [...requests].sort(
-      (a, b) => (Number(b.predicted_response_hours) || 0) - (Number(a.predicted_response_hours) || 0),
-    )[0]
-  );
-}
+const SHOWCASE_HIGH_DELAY_KEY = '68598811';
 
 export default function ModelPage() {
-  const colors = useAppColors();
-  const [filters] = useState(DEFAULT_FILTERS);
+  const { filters, pendingModelCaseKey, setPendingModelCaseKey } = useFilters();
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [activeCase, setActiveCase] = useState(null);
+  const [selectedStub, setSelectedStub] = useState(null);
+  const [caseLoading, setCaseLoading] = useState(false);
+  const [caseError, setCaseError] = useState(null);
 
-  const filteredRequests = useMemo(
-    () => applyFilters(mockRequests, filters),
-    [filters],
-  );
+  const defaultPickedRef = useRef(false);
+  const activeKeyRef = useRef(null);
 
-  const caseOptions = useMemo(() => getDemoCases(filteredRequests, 30), [filteredRequests]);
-  const defaultCase = useMemo(() => pickDefaultCase(caseOptions), [caseOptions]);
-  const hasData = filteredRequests.length > 0;
+  const loadFullCase = useCallback(async (recordOrKey) => {
+    const key = typeof recordOrKey === 'string'
+      ? recordOrKey
+      : recordOrKey?.unique_key;
 
-  const displayCase = activeCase ?? defaultCase;
+    if (!key) {
+      setActiveCase(null);
+      setCaseLoading(false);
+      return;
+    }
+
+    activeKeyRef.current = key;
+    setCaseLoading(true);
+    setCaseError(null);
+
+    try {
+      const full = await fetchRequestById(key);
+      if (activeKeyRef.current !== key) return;
+      setActiveCase(full);
+      setSelectedStub(full);
+    } catch (err) {
+      if (activeKeyRef.current !== key) return;
+      setActiveCase(null);
+      setCaseError(err instanceof Error ? err : new Error(String(err)));
+    } finally {
+      if (activeKeyRef.current === key) {
+        setCaseLoading(false);
+      }
+    }
+  }, []);
+
+  const handleFirstRecords = useCallback((records) => {
+    if (defaultPickedRef.current || !records?.length) return;
+    defaultPickedRef.current = true;
+
+    const showcase = records.find((r) => r.unique_key === SHOWCASE_HIGH_DELAY_KEY);
+    const pick = showcase ?? records[0];
+    setSelectedStub(pick);
+    loadFullCase(pick);
+  }, [loadFullCase]);
+
+  const handleSelectCase = useCallback((record) => {
+    setSelectedStub(record);
+    loadFullCase(record);
+  }, [loadFullCase]);
 
   useEffect(() => {
-    if (!caseOptions.length) {
-      setActiveCase(null);
-      return;
-    }
-    if (activeCase && caseOptions.some((r) => r.unique_key === activeCase.unique_key)) {
-      return;
-    }
-    setActiveCase(defaultCase);
-  }, [caseOptions, activeCase, defaultCase]);
+    if (!pendingModelCaseKey) return;
+
+    const key = pendingModelCaseKey;
+    defaultPickedRef.current = true;
+    setPendingModelCaseKey(null);
+    setSelectedStub({ unique_key: key });
+    loadFullCase(key);
+  }, [pendingModelCaseKey, setPendingModelCaseKey, loadFullCase]);
 
   const handleOpenDrawer = useCallback((request) => {
     setSelectedRequest(request);
@@ -75,25 +101,11 @@ export default function ModelPage() {
     setDrawerOpen(false);
   }, []);
 
+  const displayCase = activeCase;
+  const showExplanation = Boolean(displayCase);
+
   return (
     <>
-      {!hasData && (
-        <Alert
-          severity="warning"
-          variant="outlined"
-          sx={{
-            mb: PAGE_SECTION_GAP,
-            borderColor: alpha(colors.warning, 0.35),
-            bgcolor: alpha(colors.warning, 0.05),
-            color: colors.textPrimary,
-            fontSize: '0.8125rem',
-            '& .MuiAlert-icon': { color: colors.warning },
-          }}
-        >
-          No requests available.
-        </Alert>
-      )}
-
       <Box
         sx={{
           display: 'flex',
@@ -105,35 +117,52 @@ export default function ModelPage() {
           page="model"
           eyebrow="Prediction + Explainability"
           title="Model Explanation"
-          description="Select a 311 request to inspect its predicted response delay, delay bucket, model inputs, and SHAP-based explanation."
+          description="Select a 311 request to inspect its CatBoost-predicted response delay, delay bucket, model inputs, and SHAP-based explanation."
         />
 
         <PredictionCaseSelector
-          requests={caseOptions}
-          selectedRequest={displayCase}
-          onSelectRequest={setActiveCase}
+          initialFilters={filters}
+          selectedRequest={selectedStub ?? displayCase}
+          onSelectRequest={handleSelectCase}
+          onFirstRecords={handleFirstRecords}
         />
 
-        <Box sx={GRID_12}>
-          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minHeight: 0, display: 'flex' }}>
-            <PredictionOverviewCard
-              request={displayCase}
-              onViewRecord={displayCase ? () => handleOpenDrawer(displayCase) : undefined}
-            />
-          </Box>
-          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 0, display: 'flex' }}>
-            <ShapExplanationPanel request={displayCase} />
-          </Box>
-        </Box>
+        {caseLoading && !displayCase ? (
+          <DataLoadingState message="Loading case details…" />
+        ) : null}
 
-        <Box sx={GRID_12}>
-          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minHeight: 0, display: 'flex' }}>
-            <ModelFeatureTable request={displayCase} />
+        {caseError && !displayCase ? (
+          <DataErrorState error={caseError} />
+        ) : null}
+
+        {!showExplanation && !caseLoading && !caseError ? (
+          <DataEmptyState message="Select a case above to view its prediction and SHAP explanation." />
+        ) : null}
+
+        {showExplanation ? (
+          <Box sx={GRID_12}>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minHeight: 0, display: 'flex' }}>
+              <PredictionOverviewCard
+                request={displayCase}
+                onViewRecord={displayCase ? () => handleOpenDrawer(displayCase) : undefined}
+              />
+            </Box>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 0, display: 'flex' }}>
+              <ShapExplanationPanel request={displayCase} />
+            </Box>
           </Box>
-          <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minHeight: 0, display: 'flex' }}>
-            <RequestLocationPreview request={displayCase} />
+        ) : null}
+
+        {showExplanation ? (
+          <Box sx={GRID_12}>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minHeight: 0, display: 'flex' }}>
+              <ModelFeatureTable request={displayCase} />
+            </Box>
+            <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minHeight: 0, display: 'flex' }}>
+              <RequestLocationPreview request={displayCase} />
+            </Box>
           </Box>
-        </Box>
+        ) : null}
       </Box>
 
       <RequestDetailsDrawer

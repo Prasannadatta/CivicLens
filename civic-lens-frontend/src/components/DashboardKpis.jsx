@@ -33,7 +33,9 @@ const KPI_CONFIG = [
   },
 ];
 
-export default function DashboardKpis({ kpis, showValueSkeleton = false }) {
+export default function DashboardKpis({ kpis, loading = false, showValueSkeleton = false }) {
+  const showSkeleton = loading || showValueSkeleton;
+
   return (
     <Grid container spacing={{ xs: 1.5, md: 2 }}>
       {KPI_CONFIG.map((card) => {
@@ -46,7 +48,7 @@ export default function DashboardKpis({ kpis, showValueSkeleton = false }) {
               icon={Icon}
               label={card.label}
               value={card.format(kpis)}
-              showValueSkeleton={showValueSkeleton}
+              showValueSkeleton={showSkeleton}
             />
           </Grid>
         );

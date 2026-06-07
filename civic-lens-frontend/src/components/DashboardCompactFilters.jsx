@@ -9,52 +9,41 @@ import {
 } from '@mui/material';
 import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useAppColors } from '../ColorModeContext';
-import { DEFAULT_FILTERS } from './FilterPanel';
+import { DEFAULT_FILTERS } from '../context/FilterContext';
 import {
   filterRowGridSx,
   filterToolbarShellSx,
   getFilterFieldSx,
   getFilterResetButtonSx,
 } from '../styles/filterControls';
+import { facetToOptionsWithSelection } from '../utils/facetOptions';
 
 const FILTER_KEYS = [
   { key: 'borough', field: 'borough', label: 'Borough' },
-  { key: 'complaintType', field: 'complaint_type', label: 'Complaint Type' },
+  { key: 'complaint_type', field: 'complaint_type', label: 'Complaint Type' },
   { key: 'agency', field: 'agency', label: 'Agency' },
+  { key: 'delay_bucket', field: 'delay_bucket', label: 'Delay Bucket' },
   { key: 'status', field: 'status', label: 'Status' },
-  { key: 'year', field: 'year', label: 'Year', numeric: true },
 ];
 
-function deriveOptions(requests, field, numeric = false) {
-  const values = (Array.isArray(requests) ? requests : [])
-    .map((record) => record?.[field])
-    .filter((value) => value != null && value !== '');
-
-  const unique = [...new Set(values.map(String))];
-  if (numeric) unique.sort((a, b) => Number(b) - Number(a));
-  else unique.sort((a, b) => a.localeCompare(b));
-
-  return ['All', ...unique];
-}
-
 export default function DashboardCompactFilters({
-  requests = [],
+  facets = {},
   filters = DEFAULT_FILTERS,
-  onFiltersChange,
+  onFilterChange,
   onReset,
 }) {
   const colors = useAppColors();
 
   const optionsByKey = useMemo(() => {
     const map = {};
-    FILTER_KEYS.forEach(({ key, field, numeric }) => {
-      map[key] = deriveOptions(requests, field, numeric);
+    FILTER_KEYS.forEach(({ key, field }) => {
+      map[key] = facetToOptionsWithSelection(facets, field, filters[key]);
     });
     return map;
-  }, [requests]);
+  }, [facets, filters]);
 
-  const handleChange = (field) => (event) => {
-    onFiltersChange?.({ ...filters, [field]: event.target.value });
+  const handleChange = (key) => (event) => {
+    onFilterChange?.(key, event.target.value);
   };
 
   return (

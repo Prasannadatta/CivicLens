@@ -4,49 +4,98 @@ import PageIntro from '../components/PageIntro';
 import MapControlPanel from '../components/MapControlPanel';
 import MapStatsBar from '../components/MapStatsBar';
 import NYCRequestMap from '../components/NYCRequestMap';
-import MapRequestDrawer from '../components/MapRequestDrawer';
-import { mockRequests } from '../data/mockRequests';
-import {
-  applyMapFilters,
-  DEFAULT_MAP_FILTERS,
-  getMapStats,
-} from '../utils/mapHelpers';
+import ChartLoadingOverlay from '../components/ChartLoadingOverlay';
+import { DataEmptyState, DataErrorState } from '../components/DataFetchStatus';
+import { DEFAULT_FILTERS, useFilters } from '../context/FilterContext';
+import useCascadingFacets from '../hooks/useCascadingFacets';
+import useMapData from '../hooks/useMapData';
 import { PAGE_SECTION_GAP } from '../styles/modelViewLayout';
 
-export default function MapPage() {
-  const [filters, setFilters] = useState(DEFAULT_MAP_FILTERS);
+const EMPTY_MAP_STATS = {
+  visibleRequests: 0,
+  avgPredictedDelay: 0,
+  highDelayCount: 0,
+  unresolvedRate: 0,
+};
+
+export default function MapPage({ onNavigate }) {
+  const { filters: dashboardFilters, setPendingModelCaseKey } = useFilters();
+  const [mapFilters, setMapFilters] = useState(() => ({ ...dashboardFilters }));
   const [colorMode, setColorMode] = useState('delayBucket');
   const [highDelayOnly, setHighDelayOnly] = useState(false);
-  const [selectedRequest, setSelectedRequest] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const mapExtra = useMemo(() => ({ highDelayOnly, mapBuckets: true }), [highDelayOnly]);
+  const { facets } = useCascadingFacets(mapFilters, mapExtra);
+  const { data, loading, error } = useMapData(mapFilters, mapExtra);
 
-  const filteredRequests = useMemo(
-    () => applyMapFilters(mockRequests, filters, { highDelayOnly }),
-    [filters, highDelayOnly],
-  );
-
-  const stats = useMemo(() => getMapStats(filteredRequests), [filteredRequests]);
-
-  const selectedRequestId = selectedRequest?.unique_key ?? selectedRequest?._id ?? null;
-
-  const handleFiltersChange = useCallback((next) => {
-    setFilters(next);
+  const handleMapFilterChange = useCallback((key, value) => {
+    setMapFilters((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  const hasData = Boolean(data);
+  const showLoadingOverlay = loading && hasData;
+  const showKpiSkeleton = loading && !hasData;
+
+  const requests = data?.mapPoints?.records ?? [];
+  const stats = useMemo(() => {
+    const statsData = data?.stats;
+    if (!statsData) return EMPTY_MAP_STATS;
+    return {
+      visibleRequests: data?.mapPoints?.count ?? requests.length,
+      avgPredictedDelay: statsData.avgPredictedHours ?? 0,
+      highDelayCount: statsData.highDelayCount ?? 0,
+      unresolvedRate: statsData.unresolvedRate ?? 0,
+    };
+  }, [data, requests.length]);
+
   const handleReset = useCallback(() => {
-    setFilters(DEFAULT_MAP_FILTERS);
+    setMapFilters({ ...DEFAULT_FILTERS });
     setHighDelayOnly(false);
     setColorMode('delayBucket');
+    setSelectedRequestId(null);
   }, []);
 
   const handleSelectRequest = useCallback((request) => {
-    setSelectedRequest(request);
-    setDrawerOpen(true);
+    const id = request?.unique_key ?? request?._id ?? null;
+    setSelectedRequestId(id);
   }, []);
 
-  const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false);
-  }, []);
+  const handleViewModelDetails = useCallback((request) => {
+    const key = request?.unique_key ?? request?._id;
+    if (!key) return;
+    setPendingModelCaseKey(key);
+    onNavigate?.('model');
+  }, [setPendingModelCaseKey, onNavigate]);
+
+  const isEmpty = !loading && hasData && requests.length === 0;
+
+  if (error && !hasData) {
+    return <DataErrorState error={error} />;
+  }
+
+  if (isEmpty) {
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: PAGE_SECTION_GAP, pb: '96px' }}>
+        <PageIntro
+          page="map"
+          eyebrow="Spatial Exploration"
+          title="NYC Request Map"
+          description="View 311 requests on a real NYC map, colored by delay bucket, complaint type, status, or prediction risk."
+        />
+        <MapControlPanel
+          facets={facets}
+          filters={mapFilters}
+          colorMode={colorMode}
+          highDelayOnly={highDelayOnly}
+          onFilterChange={handleMapFilterChange}
+          onColorModeChange={setColorMode}
+          onHighDelayOnlyChange={setHighDelayOnly}
+          onReset={handleReset}
+        />
+        <DataEmptyState message="No map points match the current filters." />
+      </Box>
+    );
+  }
 
   return (
     <>
@@ -65,34 +114,31 @@ export default function MapPage() {
           description="View 311 requests on a real NYC map, colored by delay bucket, complaint type, status, or prediction risk."
         />
 
-        <MapStatsBar stats={stats} />
+        <MapStatsBar stats={stats} loading={showKpiSkeleton} />
 
         <MapControlPanel
-          requests={mockRequests}
-          filters={filters}
+          facets={facets}
+          filters={mapFilters}
           colorMode={colorMode}
           highDelayOnly={highDelayOnly}
-          onFiltersChange={handleFiltersChange}
+          onFilterChange={handleMapFilterChange}
           onColorModeChange={setColorMode}
           onHighDelayOnlyChange={setHighDelayOnly}
           onReset={handleReset}
         />
 
         <Box sx={{ minHeight: 0 }}>
-          <NYCRequestMap
-            requests={filteredRequests}
-            colorMode={colorMode}
-            selectedRequestId={selectedRequestId}
-            onSelectRequest={handleSelectRequest}
-          />
+          <ChartLoadingOverlay loading={showLoadingOverlay}>
+            <NYCRequestMap
+              requests={requests}
+              colorMode={colorMode}
+              selectedRequestId={selectedRequestId}
+              onSelectRequest={handleSelectRequest}
+              onViewModelDetails={handleViewModelDetails}
+            />
+          </ChartLoadingOverlay>
         </Box>
       </Box>
-
-      <MapRequestDrawer
-        request={selectedRequest}
-        open={drawerOpen}
-        onClose={handleCloseDrawer}
-      />
     </>
   );
 }

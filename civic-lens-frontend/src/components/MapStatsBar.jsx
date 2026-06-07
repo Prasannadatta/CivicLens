@@ -33,7 +33,7 @@ const STAT_CONFIG = [
   },
 ];
 
-export default function MapStatsBar({ stats }) {
+export default function MapStatsBar({ stats, loading = false }) {
   return (
     <Grid container spacing={{ xs: 1.5, md: 2 }}>
       {STAT_CONFIG.map((card) => {
@@ -45,6 +45,7 @@ export default function MapStatsBar({ stats }) {
               icon={Icon}
               label={card.label}
               value={card.format(stats)}
+              showValueSkeleton={loading}
             />
           </Grid>
         );

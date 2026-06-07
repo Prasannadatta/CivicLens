@@ -1,8 +1,23 @@
 import { formatHours } from './analytics';
 
-export const ML_MODEL_VERSION = 'civic-lens-mock-v0.4';
+export const ML_MODEL_VERSION = 'catboost_v1';
 
-const SHOWCASE_KEYS = new Set(['61999001', '61999002', '61999003']);
+const SHOWCASE_KEYS = new Set(['68598811', '61999001', '61999002', '61999003']);
+
+const FEATURE_LABELS = {
+  agency_complaint_median: 'Agency + complaint historical delay',
+  borough_complaint_median: 'Borough + complaint median',
+  agency_zip_median: 'Agency + ZIP historical delay',
+  agency_workload_24h: 'Recent agency workload',
+  agency_volume: 'Agency volume',
+  complaint_type: 'Complaint type',
+  month: 'Month / seasonality',
+  borough: 'Borough',
+  agency: 'Agency',
+  season: 'Season',
+  incident_zip: 'Incident ZIP',
+  open_data_channel_type: 'Submission channel',
+};
 
 export function getDelayTier(predictedHours) {
   const hours = Number(predictedHours) || 0;
@@ -24,16 +39,23 @@ export function getDelayTierLabel(recordOrTier) {
 }
 
 function mapShapFactors(record) {
-  const factors = record?.shap_explanation?.factors;
-  if (!Array.isArray(factors) || !factors.length) return null;
+  const shap = record?.shap_explanation;
+  const raw = shap?.factors?.length
+    ? shap.factors
+    : shap?.top_features;
 
-  return factors.map((row) => ({
-    feature: row.feature,
-    label: row.label,
-    value: record.model_features?.[row.feature] ?? '—',
-    shap: row.shap_value,
-    direction: row.direction,
-  }));
+  if (!Array.isArray(raw) || !raw.length) return null;
+
+  return raw.map((row) => {
+    const shapValue = Number(row.shap_value) || 0;
+    return {
+      feature: row.feature,
+      label: row.label || FEATURE_LABELS[row.feature] || row.feature,
+      value: record.model_features?.[row.feature] ?? record[row.feature] ?? '—',
+      shap: shapValue,
+      direction: row.direction || (shapValue >= 0 ? 'increases' : 'decreases'),
+    };
+  });
 }
 
 /** Uses embedded `shap_explanation` when present; otherwise returns empty. */
@@ -101,15 +123,19 @@ export function getPredictionSummary(record) {
     delayBucket: record.predicted_delay_bucket || 'Same Day',
     riskLevel: record.prediction_risk_level || 'Low',
     riskScore: Number(record.delay_risk_score) || 0,
-    modelVersion: record.model_version || ML_MODEL_VERSION,
+    modelVersion: record.prediction_model || record.model_version || ML_MODEL_VERSION,
+    predictionScope: record.prediction_scope || null,
+    predictionGeneratedAt: record.prediction_generated_at || null,
     baselineHours: shap?.baseline_value ?? Math.max(0, predicted * 0.45),
     predictionValue: shap?.prediction_value ?? predicted,
   };
 }
 
-/** Curated cases — prioritizes recognizable showcase records. */
+/** Curated cases — prioritizes recognizable showcase records with ML data. */
 export function getDemoCases(requests, limit = 10) {
-  const list = Array.isArray(requests) ? requests : [];
+  const list = (Array.isArray(requests) ? requests : [])
+    .filter((record) => record?.ml_eligible !== false && Number(record?.predicted_response_hours) > 0);
+
   if (!list.length) return [];
 
   const showcases = list.filter((record) => SHOWCASE_KEYS.has(record.unique_key));

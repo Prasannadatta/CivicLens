@@ -50,13 +50,10 @@ export default function MapLegend({ colorMode, complaintLegend = [], otherColor 
         ...complaintLegend.map(({ type, color }) => ({ color, label: type })),
         { color: resolvedOtherColor, label: 'Other' },
       ]
-    : [
-        ...DELAY_BUCKET_LABELS.map((label) => ({
-          color: getDelayBucketColor(label, mode),
-          label,
-        })),
-        { color: getDelayBucketColor('unknown', mode), label: 'Unknown' },
-      ];
+    : DELAY_BUCKET_LABELS.map((label) => ({
+        color: getDelayBucketColor(label, mode),
+        label,
+      }));
 
   return (
     <Box

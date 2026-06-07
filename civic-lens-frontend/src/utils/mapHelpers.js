@@ -1,4 +1,4 @@
-import { getPredictedDelayBucket } from '../data/mockRequests';
+import { getPredictedDelayBucket } from './predictionHelpers';
 
 import { SEMANTIC_COLORS } from '../styles/semanticColors';
 
@@ -32,6 +32,12 @@ export const DELAY_BUCKET_LABELS = [
   'More than 1 Week',
 ];
 
+const VALID_DELAY_BUCKETS = new Set(DELAY_BUCKET_LABELS);
+
+export function isValidDelayBucket(bucket) {
+  return VALID_DELAY_BUCKETS.has(bucket);
+}
+
 export function getComplaintTypePalette(mode = 'light') {
   const p = getMapPalette(mode);
   return [...COMPLAINT_SLOT_KEYS.map((key) => p[key]), p.gray];
@@ -59,18 +65,49 @@ function isUnresolved(record) {
   return ['Open', 'In Progress', 'Pending'].includes(String(record?.status ?? ''));
 }
 
+export function isOpenRequest(record) {
+  return Number(record?.is_unresolved) === 1;
+}
+
+function resolveBucketLabel(rawBucket, hours) {
+  if (rawBucket && rawBucket !== 'unknown' && isValidDelayBucket(rawBucket)) {
+    return rawBucket;
+  }
+  if (Number.isFinite(hours) && hours > 0) {
+    const derived = getPredictedDelayBucket(hours);
+    return isValidDelayBucket(derived) ? derived : null;
+  }
+  return null;
+}
+
+/** Status-aware bucket: predicted_bucket for open, actual_bucket for closed. */
+export function getBucket(record) {
+  if (!record || typeof record !== 'object') return null;
+
+  if (isOpenRequest(record)) {
+    return resolveBucketLabel(
+      record.predicted_bucket ?? record.predicted_delay_bucket,
+      Number(record.predicted_response_hours),
+    );
+  }
+
+  return resolveBucketLabel(record.actual_bucket, Number(record.response_hours));
+}
+
+export function hasMapBucket(record) {
+  return getBucket(record) != null;
+}
+
 export function getRequestDelayBucket(record) {
-  const bucket = record?.predicted_delay_bucket;
-  if (bucket && bucket !== 'unknown') return bucket;
-  const hours = Number(record?.predicted_response_hours);
-  if (Number.isFinite(hours)) return getPredictedDelayBucket(hours);
-  return 'unknown';
+  return getBucket(record) ?? 'unknown';
 }
 
 export function isHighDelayRequest(record) {
-  const bucket = getRequestDelayBucket(record);
+  const bucket = getBucket(record);
   if (bucket === '3–7 Days' || bucket === 'More than 1 Week') return true;
-  const hours = Number(record?.predicted_response_hours);
+  const hours = isOpenRequest(record)
+    ? Number(record?.predicted_response_hours)
+    : Number(record?.response_hours);
   return Number.isFinite(hours) && hours >= 72;
 }
 
@@ -90,7 +127,7 @@ export function applyMapFilters(requests, filters = {}, { highDelayOnly = false 
     if (isActiveFilter(filters.complaintType) && String(record?.complaint_type) !== filters.complaintType) return false;
     if (isActiveFilter(filters.agency) && String(record?.agency) !== filters.agency) return false;
     if (isActiveFilter(filters.status) && String(record?.status) !== filters.status) return false;
-    if (isActiveFilter(filters.delayBucket) && getRequestDelayBucket(record) !== filters.delayBucket) return false;
+    if (isActiveFilter(filters.delayBucket) && getBucket(record) !== filters.delayBucket) return false;
     if (highDelayOnly && !isHighDelayRequest(record)) return false;
     return true;
   });
@@ -107,17 +144,22 @@ export function sampleEvenly(requests, max = MAX_MAP_POINTS) {
 }
 
 export function getMapPlotPoints(requests) {
-  const withCoords = requests.filter(hasValidCoordinates);
-  return sampleEvenly(withCoords, MAX_MAP_POINTS);
+  const plottable = requests.filter(
+    (record) => hasValidCoordinates(record) && hasMapBucket(record),
+  );
+  return sampleEvenly(plottable, MAX_MAP_POINTS);
 }
 
 export function getMarkerRadius(record) {
-  const hours = Number(record?.predicted_response_hours ?? record?.response_hours) || 24;
-  const bucket = getRequestDelayBucket(record);
+  const hours = isOpenRequest(record)
+    ? Number(record?.predicted_response_hours)
+    : Number(record?.response_hours);
+  const baseHours = Number.isFinite(hours) && hours > 0 ? hours : 24;
+  const bucket = getBucket(record);
   const isMedium = bucket === '3–7 Days';
   const isCritical = bucket === 'More than 1 Week';
 
-  const normalized = Math.sqrt(Math.min(Math.max(hours, 0) / 168, 1));
+  const normalized = Math.sqrt(Math.min(Math.max(baseHours, 0) / 168, 1));
   let radius = 4 + normalized * 2;
 
   if (isMedium) radius += 0.75;
@@ -162,7 +204,7 @@ export function getMarkerColor(record, colorMode, complaintColorMap, topTypes, m
   if (colorMode === 'complaintType') {
     return getComplaintTypeColor(record, complaintColorMap, topTypes);
   }
-  return getDelayBucketColor(getRequestDelayBucket(record), mode);
+  return getDelayBucketColor(getBucket(record), mode);
 }
 
 export function getMapStats(requests) {

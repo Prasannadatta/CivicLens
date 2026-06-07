@@ -109,7 +109,8 @@ export default function MapRequestDrawer({ request, open, onClose }) {
   const colors = useAppColors();
   const bucket = request ? getRequestDelayBucket(request) : null;
   const riskLevel = request?.prediction_risk_level;
-  const factors = request?.shap_explanation?.factors;
+  const factors = request?.shap_explanation?.factors
+    ?? request?.shap_explanation?.top_features;
 
   return (
     <Drawer

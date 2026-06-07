@@ -656,7 +656,10 @@ export function getDashboardDelayDrivers(requests, area = null) {
     });
   }
 
-  const workload = mean(list.map((record) => num(record?.agency_workload_24h)));
+  const workload = mean(list.map((record) => {
+    const raw = record?.agency_workload_24h ?? record?.model_features?.agency_workload_24h;
+    return num(raw);
+  }));
   if (workload > 0) {
     drivers.push({
       key: 'workload',

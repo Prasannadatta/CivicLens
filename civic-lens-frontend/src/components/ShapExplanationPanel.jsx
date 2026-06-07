@@ -25,27 +25,51 @@ const PURPLE_DEEP = '#7C3AED';
 
 // Full descriptive labels — used in the tooltip
 const FEATURE_LABELS = {
+  borough_complaint_median: 'Borough historical delay',
   agency_complaint_median: 'Agency + complaint historical delay',
+  complaint_median_hours: 'Complaint median response time',
   agency_zip_median: 'Agency + ZIP historical delay',
-  agency_workload_24h: 'Recent agency workload',
+  agency_dow_median: 'Agency day-of-week historical delay',
+  agency_median_hours: 'Agency median response time',
+  agency_volume: 'Agency volume',
+  agency_complaint_volume: 'Agency complaint load',
+  agency_workload_24h: 'Recent agency workload (24h)',
+  agency_workload_7d: 'Recent agency workload (7d)',
+  incident_zip: 'Incident ZIP',
+  urgency_score: 'Urgency score',
   complaint_type: 'Complaint type',
+  open_data_channel_type: 'Submission channel',
+  dow_complaint: 'Day-of-week × complaint',
+  day_of_week: 'Day of week',
   month: 'Month / seasonality',
   borough: 'Borough effect',
   agency: 'Agency effect',
-  open_data_channel_type: 'Submission channel',
 };
 
-// Short labels — used on the y-axis pills (kept brief and similar in length)
-const FEATURE_SHORT_LABELS = {
-  agency_complaint_median: 'Complaint history',
+// Short display labels — shown on y-axis pills (feature keys unchanged for data lookup)
+const FEATURE_DISPLAY_LABELS = {
+  borough_complaint_median: 'Borough history',
+  agency_complaint_median: 'Agency history',
+  complaint_median_hours: 'Complaint median',
   agency_zip_median: 'ZIP history',
-  agency_workload_24h: 'Agency workload',
+  agency_dow_median: 'Day-of-week history',
+  agency_median_hours: 'Agency median',
+  agency_volume: 'Agency volume',
+  agency_complaint_volume: 'Agency load',
+  agency_workload_24h: 'Workload 24h',
+  agency_workload_7d: 'Workload 7d',
+  incident_zip: 'Incident ZIP',
+  urgency_score: 'Urgency score',
   complaint_type: 'Complaint type',
+  open_data_channel_type: 'Channel',
+  dow_complaint: 'Day × complaint',
+  day_of_week: 'Day of week',
   month: 'Seasonality',
   borough: 'Borough',
   agency: 'Agency',
-  open_data_channel_type: 'Channel',
 };
+
+const PILL_LABEL_MAX = 22;
 
 const MONTH_NAMES = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -58,14 +82,182 @@ function truncateLabel(text, max = 26) {
   return value.length > max ? `${value.slice(0, max - 1)}…` : value;
 }
 
+function humanizeFeature(feature) {
+  if (!feature) return 'Unknown factor';
+  const text = String(feature).replace(/_/g, ' ');
+  return text.charAt(0).toUpperCase() + text.slice(1);
+}
+
 function resolveShortLabel(row) {
-  return FEATURE_SHORT_LABELS[row?.feature] || row?.shortLabel || truncateLabel(resolveLabel(row), 18);
+  const feature = row?.feature;
+  if (feature && FEATURE_DISPLAY_LABELS[feature]) {
+    return truncateLabel(FEATURE_DISPLAY_LABELS[feature], PILL_LABEL_MAX);
+  }
+  return truncateLabel(humanizeFeature(feature), PILL_LABEL_MAX);
 }
 
 function formatShapValue(value) {
   const n = Number(value) || 0;
   const sign = n >= 0 ? '+' : '';
   return `${sign}${n.toFixed(2)}`;
+}
+
+function formatSpeedComparison(baseline, predicted) {
+  const diff = baseline - predicted;
+  const absDiff = Math.round(Math.abs(diff) * 10) / 10;
+  if (absDiff < 0.05) return 'about the same speed';
+  if (diff > 0) return `${absDiff.toFixed(1)}h faster`;
+  return `${absDiff.toFixed(1)}h slower`;
+}
+
+function buildHeaderSummary(baseline, predicted) {
+  return `Typical request: ${baseline.toFixed(1)}h  →  This request: ${predicted.toFixed(1)}h  (${formatSpeedComparison(baseline, predicted)})`;
+}
+
+function estimateLabelWidth(label) {
+  return Math.max(30, String(label).length * 7.2);
+}
+
+/** Nudge SHAP value labels away from reference lines so they never sit on dashed/solid markers. */
+function resolveShapLabelPosition({
+  positive,
+  x0,
+  barW,
+  bx,
+  px,
+  shapLabel,
+}) {
+  const BAR_GAP = 6;
+  const LINE_PAD = 11;
+  const labelW = estimateLabelWidth(shapLabel);
+
+  const blockedZones = [
+    [bx - LINE_PAD, bx + LINE_PAD],
+    [px - LINE_PAD, px + LINE_PAD],
+  ];
+
+  const bbox = (x, anchor) => (
+    anchor === 'start' ? [x, x + labelW] : [x - labelW, x]
+  );
+
+  const hitsZone = ([left, right]) => (
+    blockedZones.some(([zoneLeft, zoneRight]) => left < zoneRight && right > zoneLeft)
+  );
+
+  const candidates = positive
+    ? [
+      { x: x0 + barW + BAR_GAP, anchor: 'start' },
+      { x: x0 - BAR_GAP, anchor: 'end' },
+      { x: bx + LINE_PAD, anchor: 'start' },
+      { x: px + LINE_PAD, anchor: 'start' },
+    ]
+    : [
+      { x: x0 - BAR_GAP, anchor: 'end' },
+      { x: x0 + barW + BAR_GAP, anchor: 'start' },
+      { x: bx - LINE_PAD, anchor: 'end' },
+      { x: px - LINE_PAD, anchor: 'end' },
+    ];
+
+  const clear = candidates.find((candidate) => !hitsZone(bbox(candidate.x, candidate.anchor)));
+  if (clear) return clear;
+
+  const fallback = positive
+    ? { x: Math.max(x0 + barW + BAR_GAP, bx + LINE_PAD, px + LINE_PAD), anchor: 'start' }
+    : { x: Math.min(x0 - BAR_GAP, bx - LINE_PAD, px - LINE_PAD), anchor: 'end' };
+
+  return fallback;
+}
+
+/** Padded x-domain from waterfall extent — tight to this case's bar span only. */
+function computeWaterfallXDomain(baseline, predicted, steps) {
+  const allX = [baseline, predicted, ...steps.flatMap((s) => [s.runStart, s.runEnd])];
+  const xMin = Math.min(...allX);
+  const xMax = Math.max(...allX);
+  const span = Math.max(xMax - xMin, 0);
+
+  const xPad = span > 0
+    ? Math.max(span * 0.12, 0.15)
+    : Math.max(Math.abs(predicted) * 0.05, 0.5);
+
+  return { xMin, xMax, domain: [xMin - xPad, xMax + xPad] };
+}
+
+/** Place reference-line labels in a header strip without horizontal overlap. */
+function resolveReferenceLabelLayout(bx, px, baselineHours, predictedHours) {
+  const baselineText = `Typical case: ${baselineHours.toFixed(1)}h`;
+  const predictionText = `This request: ${predictedHours.toFixed(1)}h`;
+  const baselineW = estimateLabelWidth(baselineText);
+  const predictionW = estimateLabelWidth(predictionText);
+  const minGap = 10;
+
+  const baselineLabel = {
+    text: baselineText,
+    x: bx,
+    y: 10,
+    anchor: 'middle',
+  };
+  const predictionLabel = {
+    text: predictionText,
+    x: px,
+    y: 20,
+    anchor: 'middle',
+  };
+
+  const baselineBox = () => {
+    if (baselineLabel.anchor === 'start') return [baselineLabel.x, baselineLabel.x + baselineW];
+    if (baselineLabel.anchor === 'end') return [baselineLabel.x - baselineW, baselineLabel.x];
+    return [baselineLabel.x - baselineW / 2, baselineLabel.x + baselineW / 2];
+  };
+  const predictionBox = () => {
+    if (predictionLabel.anchor === 'start') return [predictionLabel.x, predictionLabel.x + predictionW];
+    if (predictionLabel.anchor === 'end') return [predictionLabel.x - predictionW, predictionLabel.x];
+    return [predictionLabel.x - predictionW / 2, predictionLabel.x + predictionW / 2];
+  };
+
+  const overlaps = () => {
+    const [b0, b1] = baselineBox();
+    const [p0, p1] = predictionBox();
+    return b0 < p1 + minGap && p0 < b1 + minGap;
+  };
+
+  if (Math.abs(bx - px) < Math.max(baselineW, predictionW) + minGap || overlaps()) {
+    if (bx <= px) {
+      baselineLabel.anchor = 'end';
+      baselineLabel.x = bx - 6;
+      predictionLabel.anchor = 'start';
+      predictionLabel.x = px + 6;
+    } else {
+      baselineLabel.anchor = 'start';
+      baselineLabel.x = bx + 6;
+      predictionLabel.anchor = 'end';
+      predictionLabel.x = px - 6;
+    }
+  }
+
+  if (overlaps()) {
+    baselineLabel.y = 8;
+    predictionLabel.y = 20;
+    if (bx <= px) {
+      baselineLabel.x = Math.min(bx, px) - 6;
+      baselineLabel.anchor = 'end';
+      predictionLabel.x = Math.max(bx, px) + 6;
+      predictionLabel.anchor = 'start';
+    } else {
+      baselineLabel.x = Math.max(bx, px) - 6;
+      baselineLabel.anchor = 'end';
+      predictionLabel.x = Math.min(bx, px) + 6;
+      predictionLabel.anchor = 'start';
+    }
+  }
+
+  return { baselineLabel, predictionLabel };
+}
+
+function pickTickCount(plotWidth, domainSpan) {
+  if (domainSpan <= 8) return plotWidth < 300 ? 4 : 5;
+  if (domainSpan <= 40) return plotWidth < 320 ? 4 : 5;
+  if (domainSpan <= 120) return 5;
+  return plotWidth < 360 ? 4 : 5;
 }
 
 function formatFeatureValue(feature, value) {
@@ -138,10 +330,10 @@ export default function ShapExplanationPanel({ request }) {
     });
   }, [factors, baseline]);
 
-  const modelAdjustment = useMemo(() => {
-    if (factors.length) return factors.reduce((s, r) => s + r.shap, 0);
-    return predicted - baseline;
-  }, [factors, predicted, baseline]);
+  const headerSummary = useMemo(
+    () => buildHeaderSummary(baseline, predicted),
+    [baseline, predicted],
+  );
 
   const positiveColor = PINK_MID;    // pink — increases
   const negativeColor = PURPLE_MID;  // violet — reduces
@@ -162,7 +354,8 @@ export default function ShapExplanationPanel({ request }) {
     const { width, height } = dims;
     // Symmetric bottom: small bottom margin so the axis sits near the chart
     // edge, leaving only the card's 22px padding below it (matches the sides).
-    const margin = { top: 28, right: 60, bottom: 24, left: 14 };
+    const ANNOT_STRIP_HEIGHT = 26;
+    const margin = { top: 28 + ANNOT_STRIP_HEIGHT, right: 60, bottom: 24, left: 14 };
     const labelColWidth = Math.min(186, Math.max(136, width * 0.3));
     const plotLeft = margin.left + labelColWidth;
     const plotWidth = Math.max(120, width - plotLeft - margin.right);
@@ -170,13 +363,11 @@ export default function ShapExplanationPanel({ request }) {
     const rowStep = plotHeight / steps.length;
     const barHeight = Math.min(26, Math.max(12, rowStep - 10));
 
-    // X domain spans all intermediate cumulative values + baseline + predicted
-    const allX = [baseline, predicted, ...steps.flatMap((s) => [s.runStart, s.runEnd])];
-    const xMin = Math.min(...allX);
-    const xMax = Math.max(...allX);
-    const xPad = Math.max((xMax - xMin) * 0.1, 4);
+    const { domain: xDomain } = computeWaterfallXDomain(baseline, predicted, steps);
+    const domainSpan = xDomain[1] - xDomain[0];
+    const tickCount = pickTickCount(plotWidth, domainSpan);
     const xScale = d3.scaleLinear()
-      .domain([xMin - xPad, xMax + xPad])
+      .domain(xDomain)
       .range([0, plotWidth]);
 
     const svg = d3.select(svgRef.current);
@@ -187,7 +378,7 @@ export default function ShapExplanationPanel({ request }) {
       .attr('viewBox', `0 0 ${width} ${height}`)
       .attr('preserveAspectRatio', 'xMidYMid meet')
       .attr('role', 'img')
-      .attr('aria-label', 'SHAP waterfall chart: cumulative feature contributions from baseline to prediction');
+      .attr('aria-label', 'Waterfall chart showing factors that raise or lower expected response time compared with a typical request');
 
     const defs = svg.append('defs');
     // Pink gradient — increases, light → deep
@@ -208,8 +399,8 @@ export default function ShapExplanationPanel({ request }) {
       .attr('fill', colors.chartPlotBg)
       .attr('stroke', colors.border);
 
-    // Grid + x-axis ticks
-    const ticks = xScale.ticks(5);
+    // Grid + x-axis ticks — generated within the tight domain (no .nice() widening)
+    const ticks = d3.ticks(xDomain[0], xDomain[1], tickCount);
     ticks.forEach((t) => {
       plot.append('line')
         .attr('x1', xScale(t)).attr('x2', xScale(t))
@@ -224,10 +415,30 @@ export default function ShapExplanationPanel({ request }) {
         .text(`${t}h`);
     });
 
-    // Baseline dashed marker — E[f(x)]
     const bx = xScale(baseline);
     const px = xScale(predicted);
-    const baselineIsLeft = baseline <= predicted;
+    const { baselineLabel, predictionLabel } = resolveReferenceLabelLayout(bx, px, baseline, predicted);
+
+    // Annotation strip above plot — staggered labels with collision avoidance
+    const annotGroup = svg.append('g').attr('transform', `translate(${plotLeft}, ${margin.top - ANNOT_STRIP_HEIGHT})`);
+    annotGroup.append('text')
+      .attr('x', baselineLabel.x)
+      .attr('y', baselineLabel.y)
+      .attr('text-anchor', baselineLabel.anchor)
+      .attr('fill', colors.chartLabel)
+      .attr('font-size', 10)
+      .attr('font-weight', 700)
+      .text(baselineLabel.text);
+    annotGroup.append('text')
+      .attr('x', predictionLabel.x)
+      .attr('y', predictionLabel.y)
+      .attr('text-anchor', predictionLabel.anchor)
+      .attr('fill', colors.primary)
+      .attr('font-size', 10)
+      .attr('font-weight', 700)
+      .text(predictionLabel.text);
+
+    // Baseline dashed marker — typical case
     plot.append('line')
       .attr('x1', bx).attr('x2', bx)
       .attr('y1', 0).attr('y2', plotHeight)
@@ -235,30 +446,14 @@ export default function ShapExplanationPanel({ request }) {
       .attr('stroke-width', 1.5)
       .attr('stroke-dasharray', '4,3')
       .attr('opacity', 0.75);
-    plot.append('text')
-      .attr('x', bx + (baselineIsLeft ? 4 : -4))
-      .attr('y', 13)
-      .attr('text-anchor', baselineIsLeft ? 'start' : 'end')
-      .attr('fill', colors.chartLabel)
-      .attr('font-size', 11)
-      .attr('font-weight', 700)
-      .text(`E[f(x)] = ${baseline.toFixed(1)}h`);
 
-    // Prediction solid marker — f(x)
+    // Prediction solid marker — this request
     plot.append('line')
       .attr('x1', px).attr('x2', px)
       .attr('y1', 0).attr('y2', plotHeight)
       .attr('stroke', colors.primary)
       .attr('stroke-width', 2)
       .attr('opacity', 0.9);
-    plot.append('text')
-      .attr('x', px + (baselineIsLeft ? -4 : 4))
-      .attr('y', 26)
-      .attr('text-anchor', baselineIsLeft ? 'end' : 'start')
-      .attr('fill', colors.primary)
-      .attr('font-size', 11)
-      .attr('font-weight', 700)
-      .text(`f(x) = ${predicted.toFixed(1)}h`);
 
     // Feature labels (left column) — uniform-width pink pills, centered, theme-aware
     const darkMode = isDarkColor(colors.chartPlotBg);
@@ -288,7 +483,7 @@ export default function ShapExplanationPanel({ request }) {
         .attr('fill', pillText)
         .attr('font-size', 13)
         .attr('font-weight', 600)
-        .text(truncateLabel(d.shortLabel, 18));
+        .text(d.shortLabel);
     });
 
     // Step connectors — thin vertical lines linking the end of bar i-1 to start of bar i
@@ -347,17 +542,24 @@ export default function ShapExplanationPanel({ request }) {
           setTooltip(null);
         });
 
-      // Signed contribution label next to bar — larger
-      const labelX = positive ? x0 + barW + 5 : x0 - 5;
+      const shapLabel = formatShapValue(d.shap);
+      const { x: labelX, anchor: labelAnchor } = resolveShapLabelPosition({
+        positive,
+        x0,
+        barW,
+        bx,
+        px,
+        shapLabel,
+      });
       g.append('text')
         .attr('x', labelX).attr('y', barHeight / 2)
         .attr('dy', '0.32em')
-        .attr('text-anchor', positive ? 'start' : 'end')
+        .attr('text-anchor', labelAnchor)
         .attr('fill', positive ? positiveColor : negativeColor)
         .attr('font-size', 13)
         .attr('font-weight', 800)
         .attr('pointer-events', 'none')
-        .text(formatShapValue(d.shap));
+        .text(shapLabel);
     });
   }, [steps, dims, colors, positiveColor, negativeColor, baseline, predicted]);
 
@@ -368,7 +570,7 @@ export default function ShapExplanationPanel({ request }) {
           Explanation
         </Typography>
         <Tooltip
-          title="Each bar shifts the prediction from the model baseline. Bars walk cumulatively from E[f(x)] to f(x)."
+          title="Each bar shows what pushes the expected wait up or down compared with a typical similar request."
           arrow
           placement="top"
         >
@@ -382,37 +584,60 @@ export default function ShapExplanationPanel({ request }) {
         </Typography>
       ) : (
         <>
-          {/* Compact summary strip — same numbers the waterfall encodes, shown once */}
+          <Typography
+            variant="caption"
+            sx={{
+              display: 'block',
+              mb: 0.75,
+              flexShrink: 0,
+              fontSize: '0.72rem',
+              fontVariantNumeric: 'tabular-nums',
+              color: colors.textSecondary,
+              lineHeight: 1.45,
+            }}
+          >
+            {headerSummary}
+          </Typography>
+
           <Stack
             direction="row"
-            spacing={1}
-            divider={<Box sx={{ width: '1px', height: 10, bgcolor: colors.border, alignSelf: 'center' }} />}
-            sx={{ mb: 0.75, flexShrink: 0, alignItems: 'center' }}
+            spacing={1.75}
+            sx={{ mb: 0.75, flexShrink: 0, alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}
           >
-            <Typography
-              variant="caption"
-              sx={{ fontSize: '0.72rem', fontVariantNumeric: 'tabular-nums', color: colors.textSecondary }}
-            >
-              <Box component="span" sx={{ fontWeight: 700, color: colors.textMuted, mr: 0.3 }}>Baseline</Box>
-              {baseline.toFixed(2)} h
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                fontSize: '0.72rem',
-                fontWeight: 700,
-                fontVariantNumeric: 'tabular-nums',
-                color: modelAdjustment >= 0 ? positiveColor : negativeColor,
-              }}
-            >
-              Adj {formatShapValue(modelAdjustment)} h
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{ fontSize: '0.72rem', fontWeight: 800, fontVariantNumeric: 'tabular-nums', color: colors.primary }}
-            >
-              Predicted {Math.round(predicted)} h
-            </Typography>
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center' }}>
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '2px',
+                  bgcolor: PINK_MID,
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.72rem', color: colors.textSecondary, lineHeight: 1.2 }}
+              >
+                Increases delay
+              </Typography>
+            </Stack>
+            <Stack direction="row" spacing={0.6} sx={{ alignItems: 'center' }}>
+              <Box
+                sx={{
+                  width: 10,
+                  height: 10,
+                  borderRadius: '2px',
+                  bgcolor: PURPLE_MID,
+                  flexShrink: 0,
+                }}
+              />
+              <Typography
+                variant="caption"
+                sx={{ fontSize: '0.72rem', color: colors.textSecondary, lineHeight: 1.2 }}
+              >
+                Decreases delay
+              </Typography>
+            </Stack>
           </Stack>
 
           <Box
