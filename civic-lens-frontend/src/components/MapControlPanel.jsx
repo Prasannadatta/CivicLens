@@ -15,7 +15,7 @@ import RestartAltIcon from '@mui/icons-material/RestartAlt';
 import { useAppColors } from '../ColorModeContext';
 import { DEFAULT_FILTERS } from '../context/FilterContext';
 import { DELAY_BUCKET_LABELS } from '../utils/mapHelpers';
-import { facetToOptions, facetToOptionsWithSelection } from '../utils/facetOptions';
+import { facetToOptionsWithSelection } from '../utils/facetOptions';
 import {
   filterRowGridSx,
   filterSecondaryRowSx,

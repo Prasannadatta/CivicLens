@@ -2,8 +2,7 @@ import { getPredictedDelayBucket } from './predictionHelpers';
 
 import { SEMANTIC_COLORS } from '../styles/semanticColors';
 
-/** Civic Lens map palette — aligned with semantic color tokens */
-export const MAP_THEME = SEMANTIC_COLORS;
+const MAP_THEME = SEMANTIC_COLORS;
 
 const COMPLAINT_SLOT_KEYS = ['cyan', 'blue', 'yellow', 'pink'];
 
@@ -21,9 +20,6 @@ export function getDelayBucketColorMap(mode = 'light') {
     unknown: p.gray,
   };
 }
-
-/** @deprecated prefer getDelayBucketColorMap(mode) */
-export const DELAY_BUCKET_COLORS = getDelayBucketColorMap('light');
 
 export const DELAY_BUCKET_LABELS = [
   'Same Day',
@@ -43,27 +39,9 @@ export function getComplaintTypePalette(mode = 'light') {
   return [...COMPLAINT_SLOT_KEYS.map((key) => p[key]), p.gray];
 }
 
-/** @deprecated prefer getComplaintTypePalette(mode) */
-export const COMPLAINT_TYPE_PALETTE = getComplaintTypePalette('light');
-
-export const DEFAULT_MAP_FILTERS = {
-  borough: 'All',
-  complaintType: 'All',
-  agency: 'All',
-  delayBucket: 'All',
-  status: 'All',
-};
+const COMPLAINT_TYPE_PALETTE = getComplaintTypePalette('light');
 
 export const MAX_MAP_POINTS = 2500;
-
-function isActiveFilter(value) {
-  return value != null && value !== '' && value !== 'All';
-}
-
-function isUnresolved(record) {
-  if (record?.is_unresolved != null) return Number(record.is_unresolved) === 1;
-  return ['Open', 'In Progress', 'Pending'].includes(String(record?.status ?? ''));
-}
 
 export function isOpenRequest(record) {
   return Number(record?.is_unresolved) === 1;
@@ -98,19 +76,6 @@ export function hasMapBucket(record) {
   return getBucket(record) != null;
 }
 
-export function getRequestDelayBucket(record) {
-  return getBucket(record) ?? 'unknown';
-}
-
-export function isHighDelayRequest(record) {
-  const bucket = getBucket(record);
-  if (bucket === '3–7 Days' || bucket === 'More than 1 Week') return true;
-  const hours = isOpenRequest(record)
-    ? Number(record?.predicted_response_hours)
-    : Number(record?.response_hours);
-  return Number.isFinite(hours) && hours >= 72;
-}
-
 export function hasValidCoordinates(record) {
   const lat = Number(record?.latitude);
   const lng = Number(record?.longitude);
@@ -119,21 +84,7 @@ export function hasValidCoordinates(record) {
     && lng >= -180 && lng <= 180;
 }
 
-export function applyMapFilters(requests, filters = {}, { highDelayOnly = false } = {}) {
-  const list = Array.isArray(requests) ? requests : [];
-
-  return list.filter((record) => {
-    if (isActiveFilter(filters.borough) && String(record?.borough) !== filters.borough) return false;
-    if (isActiveFilter(filters.complaintType) && String(record?.complaint_type) !== filters.complaintType) return false;
-    if (isActiveFilter(filters.agency) && String(record?.agency) !== filters.agency) return false;
-    if (isActiveFilter(filters.status) && String(record?.status) !== filters.status) return false;
-    if (isActiveFilter(filters.delayBucket) && getBucket(record) !== filters.delayBucket) return false;
-    if (highDelayOnly && !isHighDelayRequest(record)) return false;
-    return true;
-  });
-}
-
-export function sampleEvenly(requests, max = MAX_MAP_POINTS) {
+function sampleEvenly(requests, max = MAX_MAP_POINTS) {
   if (!requests.length || requests.length <= max) return requests;
   const step = requests.length / max;
   const sampled = [];
@@ -205,46 +156,4 @@ export function getMarkerColor(record, colorMode, complaintColorMap, topTypes, m
     return getComplaintTypeColor(record, complaintColorMap, topTypes);
   }
   return getDelayBucketColor(getBucket(record), mode);
-}
-
-export function getMapStats(requests) {
-  const list = Array.isArray(requests) ? requests : [];
-  const withCoords = list.filter(hasValidCoordinates);
-
-  if (!list.length) {
-    return {
-      visibleRequests: 0,
-      avgPredictedDelay: 0,
-      highDelayCount: 0,
-      unresolvedRate: 0,
-    };
-  }
-
-  const predictedHours = list
-    .map((r) => Number(r?.predicted_response_hours))
-    .filter((h) => Number.isFinite(h));
-  const avgPredictedDelay = predictedHours.length
-    ? predictedHours.reduce((sum, h) => sum + h, 0) / predictedHours.length
-    : 0;
-  const highDelayCount = list.filter(isHighDelayRequest).length;
-  const unresolvedCount = list.filter(isUnresolved).length;
-
-  return {
-    visibleRequests: withCoords.length,
-    avgPredictedDelay: Math.round(avgPredictedDelay * 10) / 10,
-    highDelayCount,
-    unresolvedRate: Math.round((unresolvedCount / list.length) * 1000) / 1000,
-  };
-}
-
-export function deriveFilterOptions(requests, field, numeric = false) {
-  const values = (Array.isArray(requests) ? requests : [])
-    .map((record) => record?.[field])
-    .filter((value) => value != null && value !== '');
-
-  const unique = [...new Set(values.map(String))];
-  if (numeric) unique.sort((a, b) => Number(b) - Number(a));
-  else unique.sort((a, b) => a.localeCompare(b));
-
-  return ['All', ...unique];
 }

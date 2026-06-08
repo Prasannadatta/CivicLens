@@ -17,8 +17,7 @@ function isActive(value) {
   return value != null && value !== '' && value !== 'All';
 }
 
-/** Build URLSearchParams from shared filter state (skip keys where value === "All"). */
-export function filtersToParams(filters = {}, extra = {}) {
+function filtersToParams(filters = {}, extra = {}) {
   const params = new URLSearchParams();
 
   if (isActive(filters.borough)) params.set('borough', filters.borough);
@@ -34,42 +33,23 @@ export function filtersToParams(filters = {}, extra = {}) {
   return params;
 }
 
-async function fetchEndpoint(path, filters, extra = {}, baseUrl = BASE) {
+async function fetchEndpoint(path, filters, extra = {}, options = {}) {
+  const { baseUrl = BASE, signal } = options;
   const params = filtersToParams(filters, extra);
   const qs = params.toString();
   const url = apiUrl(`${path}${qs ? `?${qs}` : ''}`, baseUrl);
-  const res = await fetch(url);
+  const res = await fetch(url, { signal });
   return parseJson(res, `Failed to fetch ${path}`);
 }
 
-export function fetchDashboardBundle(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/dashboard', filters, extra, baseUrl);
+export function fetchDashboardBundle(filters, extra, baseUrl, options = {}) {
+  return fetchEndpoint('/api/dashboard', filters, extra, { baseUrl, ...options });
 }
 
-export function fetchMapBundle(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/map-bundle', filters, extra, baseUrl);
+export function fetchMapBundle(filters, extra, baseUrl, options = {}) {
+  return fetchEndpoint('/api/map-bundle', filters, extra, { baseUrl, ...options });
 }
 
-export function fetchStats(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/stats', filters, extra, baseUrl);
-}
-
-export function fetchMapPoints(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/map-points', filters, extra, baseUrl);
-}
-
-export function fetchBoroughBurden(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/borough-burden', filters, extra, baseUrl);
-}
-
-export function fetchComplaintDrivers(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/complaint-drivers', filters, extra, baseUrl);
-}
-
-export function fetchDelayTrend(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/delay-trend', filters, extra, baseUrl);
-}
-
-export function fetchCascadingFacets(filters, extra, baseUrl) {
-  return fetchEndpoint('/api/facets', filters, extra, baseUrl);
+export function fetchCascadingFacets(filters, extra, baseUrl, options = {}) {
+  return fetchEndpoint('/api/facets', filters, extra, { baseUrl, ...options });
 }

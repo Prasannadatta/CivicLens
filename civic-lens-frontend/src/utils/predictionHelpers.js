@@ -15,7 +15,3 @@ export function getPredictionRiskLevel(hours) {
   if (h < 168) return 'High';
   return 'Critical';
 }
-
-export function getAgencyWorkload(record) {
-  return Number(record?.agency_workload_24h ?? record?.model_features?.agency_workload_24h) || 0;
-}

@@ -87,8 +87,7 @@ export default function HomePage({ onNavigate }) {
       <Grid
         container
         spacing={{ xs: 3, md: 4 }}
-        alignItems="center"
-        sx={{ pt: HOME_HERO_PT, mb: { xs: '40px', md: '52px' } }}
+        sx={{ pt: HOME_HERO_PT, mb: { xs: '40px', md: '52px' }, alignItems: 'center' }}
       >
         <Grid size={{ xs: 12, md: 6 }}>
           <Typography

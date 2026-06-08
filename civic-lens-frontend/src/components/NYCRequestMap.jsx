@@ -251,12 +251,12 @@ export default function NYCRequestMap({
               attribution={BASEMAP_ATTRIBUTION}
               url={tileUrl}
             />
-            {plotPoints.map((request) => {
+            {plotPoints.map((request, index) => {
               const id = request.unique_key ?? request._id;
               const markerColor = getMarkerColor(request, colorMode, colorMap, topTypes, mode);
               return (
                 <RequestMarker
-                  key={id}
+                  key={`${id ?? 'point'}-${request.latitude}-${request.longitude}-${index}`}
                   request={request}
                   color={markerColor}
                   isSelected={selectedRequestId === id}

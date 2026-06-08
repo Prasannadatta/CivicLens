@@ -27,7 +27,7 @@ import {
 import { getActiveFilterChipSx } from '../theme';
 import { DEFAULT_FILTERS } from '../context/FilterContext';
 import useCascadingFacets from '../hooks/useCascadingFacets';
-import useCaseList from '../hooks/useCaseList';
+import useCaseList, { caseListQueryKey } from '../hooks/useCaseList';
 import { facetToOptionsWithSelection } from '../utils/facetOptions';
 import { formatHours } from '../utils/analytics';
 import { getDelayBucketColor } from '../utils/mapHelpers';
@@ -160,6 +160,7 @@ export default function PredictionCaseSelector({
   selectedRequest = null,
   onSelectRequest,
   onFirstRecords,
+  onCasesEmpty,
 }) {
   const colors = useAppColors();
   const { mode } = useColorMode();
@@ -171,7 +172,7 @@ export default function PredictionCaseSelector({
   const [listOpen, setListOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
-  const { facets } = useCascadingFacets(pickerFilters, { mlOnly: true });
+  const { facets, facetsReady } = useCascadingFacets(pickerFilters, { mlOnly: true });
   const {
     records,
     total,
@@ -180,8 +181,14 @@ export default function PredictionCaseSelector({
     loadingMore,
     countLoading,
     error,
+    hasFetched,
     loadMore,
-  } = useCaseList(pickerFilters, { search, sort });
+  } = useCaseList(pickerFilters, { search, sort, enabled: facetsReady });
+
+  const listQueryKey = useMemo(
+    () => caseListQueryKey({ filters: pickerFilters, search, sort }),
+    [pickerFilters, search, sort],
+  );
 
   const listRef = useRef(null);
   const sentinelRef = useRef(null);
@@ -277,10 +284,18 @@ export default function PredictionCaseSelector({
   }, [loadMore, records.length, hasMore, listOpen]);
 
   useEffect(() => {
-    if (loading || !records.length || firstRecordsSentRef.current) return;
+    firstRecordsSentRef.current = false;
+  }, [listQueryKey]);
+
+  useEffect(() => {
+    if (!facetsReady || loading || !hasFetched || firstRecordsSentRef.current) return;
     firstRecordsSentRef.current = true;
-    onFirstRecords?.(records);
-  }, [loading, records, onFirstRecords]);
+    if (records.length) {
+      onFirstRecords?.(records);
+    } else {
+      onCasesEmpty?.();
+    }
+  }, [facetsReady, loading, hasFetched, records, onFirstRecords, onCasesEmpty]);
 
   const countLabel = useMemo(() => {
     if (loading && !records.length) return 'Searching cases…';
@@ -447,7 +462,7 @@ export default function PredictionCaseSelector({
 
             {records.map((record, index) => (
               <CaseListRow
-                key={record.unique_key}
+                key={`${record.unique_key ?? record._id ?? 'case'}-${index}`}
                 record={record}
                 selected={selectedRequest}
                 highlighted={highlightedIndex === index}

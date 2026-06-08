@@ -78,31 +78,6 @@ export const paletteTokens = {
   },
 };
 
-/** @deprecated use useAppColors() — kept for any static imports */
-export const colors = paletteTokens.dark;
-
-export function getChartColors(c) {
-  return [
-    c.primary,
-    c.secondary,
-    c.warning,
-    c.error,
-    '#8b9dff',
-    '#5eead4',
-    '#ffd166',
-    '#ff8fab',
-  ];
-}
-
-export function getGlassCard(c) {
-  return {
-    background: c.cardSurface,
-    border: `1px solid ${c.border}`,
-    borderRadius: 22,
-    boxShadow: c.cardShadow,
-  };
-}
-
 export function getChartPlotBox(c, mode) {
   const insetBorder = mode === 'light' ? alpha('#0f172a', 0.07) : alpha('#94a3b8', 0.12);
   return {
@@ -112,26 +87,6 @@ export function getChartPlotBox(c, mode) {
     overflow: 'visible',
     border: `1px solid ${insetBorder}`,
     bgcolor: mode === 'light' ? c.cardSurface : c.chartPlotBg,
-  };
-}
-
-export function getChartTooltipBox(c) {
-  const isLight = isLightPalette(c);
-  return {
-    bgcolor: isLight ? 'rgba(255, 255, 255, 0.94)' : 'rgba(31, 41, 55, 0.95)',
-    border: isLight ? '1px solid rgba(15, 23, 42, 0.10)' : '1px solid rgba(255, 255, 255, 0.10)',
-    borderRadius: '14px',
-    p: '12px 14px',
-    pointerEvents: 'none',
-    zIndex: 10,
-    color: isLight ? '#0f172a' : '#f8fafc',
-    backdropFilter: 'blur(10px)',
-    WebkitBackdropFilter: 'blur(10px)',
-    boxShadow: isLight
-      ? '0 12px 32px rgba(15, 23, 42, 0.12)'
-      : '0 12px 32px rgba(0, 0, 0, 0.30)',
-    minWidth: 180,
-    maxWidth: 260,
   };
 }
 
@@ -161,27 +116,6 @@ export function getSelectedFilterChipSx(c, isLight = isLightPalette(c)) {
     color: isLight ? '#b45309' : c.warning,
     border: `1px solid ${alpha(c.warning, isLight ? 0.35 : 0.4)}`,
     bgcolor: alpha(c.warning, isLight ? 0.12 : 0.16),
-  };
-}
-
-export function getPinkChipSx(c, isLight = isLightPalette(c)) {
-  return {
-    fontWeight: 700,
-    color: c.accentPink,
-    bgcolor: alpha(c.accentPink, isLight ? 0.1 : 0.16),
-    border: `1px solid ${alpha(c.accentPink, isLight ? 0.28 : 0.35)}`,
-  };
-}
-
-/** @deprecated use getHeaderNavSx / getSideNavItemSx from pageAccents.js */
-export function getNavItemSx(c, isActive) {
-  return {
-    color: isActive ? c.primary : c.textSecondary,
-    bgcolor: isActive ? c.neutralSelectedBg : 'transparent',
-    '&:hover': {
-      bgcolor: c.neutralHoverBg,
-      color: c.textPrimary,
-    },
   };
 }
 

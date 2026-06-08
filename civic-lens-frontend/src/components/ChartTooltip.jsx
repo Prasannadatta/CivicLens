@@ -87,9 +87,9 @@ export function ChartTooltipPanel({
       )}
       {rows.length > 0 && (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, mt: title || subtitle ? 0.25 : 0 }}>
-          {rows.map((row) => (
+          {rows.map((row, index) => (
             <TooltipRow
-              key={row.label}
+              key={`${row.label}-${index}`}
               label={row.label}
               value={row.value}
               textPrimary={neutral ? textPrimary : (row.color || textPrimary)}

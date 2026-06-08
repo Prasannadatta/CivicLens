@@ -20,6 +20,13 @@ export async function ensureRequestIndexes(collection) {
     collection.createIndex({ created_date: 1, complaint_type: 1, predicted_response_hours: -1 }),
     collection.createIndex({ created_date: 1, agency: 1, predicted_response_hours: -1 }),
     collection.createIndex({ created_date: 1, status: 1, predicted_response_hours: -1 }),
+    collection.createIndex({ year: 1, borough: 1 }),
+    collection.createIndex({ year: 1, complaint_type: 1 }),
+    collection.createIndex({ year: 1, agency: 1 }),
+    collection.createIndex({ year: 1, is_unresolved: 1 }),
+    collection.createIndex({ year: 1, borough: 1, complaint_type: 1 }),
+    collection.createIndex({ incident_zip: 1 }),
+    collection.createIndex({ is_unresolved: 1 }),
   ]);
 
   console.log('Indexes ensured on requests collection');

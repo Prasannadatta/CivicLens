@@ -5,6 +5,7 @@ import ModelPage from './pages/ModelPage';
 import DashboardPage from './pages/DashboardPage';
 import MapPage from './pages/MapPage';
 import { FilterProvider } from './context/FilterContext';
+import { AppSnackbarProvider } from './context/AppSnackbarContext';
 
 export default function App() {
   const [view, setView] = useState('home');
@@ -24,10 +25,12 @@ export default function App() {
   };
 
   return (
-    <FilterProvider>
-      <AppLayout currentView={view} onNavigate={setView}>
-        {renderPage()}
-      </AppLayout>
-    </FilterProvider>
+    <AppSnackbarProvider>
+      <FilterProvider>
+        <AppLayout currentView={view} onNavigate={setView}>
+          {renderPage()}
+        </AppLayout>
+      </FilterProvider>
+    </AppSnackbarProvider>
   );
 }

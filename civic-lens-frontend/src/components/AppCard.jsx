@@ -279,7 +279,7 @@ export function StatCard({
         }}
       >
         {showValueSkeleton ? (
-          <Skeleton variant="rounded" width="60%" height={26} />
+          <Skeleton variant="rounded" width="60%" height={26} animation="wave" />
         ) : (
           value
         )}

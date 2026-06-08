@@ -7,9 +7,15 @@ import {
 } from '../services/dashboardAggregation.js';
 import { buildMongoFilter, buildMapMongoFilter } from '../utils/queryFilters.js';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 export async function getDashboardBundle(req, res) {
+  const started = Date.now();
   try {
     const { payload, cache } = await getDashboardBundleData(req);
+    if (isDev) {
+      console.debug(`[api] GET /api/dashboard cache=${cache} ${Date.now() - started}ms`);
+    }
     res.set('X-Cache', cache);
     res.json(payload);
   } catch (err) {
@@ -19,8 +25,12 @@ export async function getDashboardBundle(req, res) {
 }
 
 export async function getMapBundle(req, res) {
+  const started = Date.now();
   try {
     const { payload, cache } = await getMapBundleData(req);
+    if (isDev) {
+      console.debug(`[api] GET /api/map-bundle cache=${cache} ${Date.now() - started}ms`);
+    }
     res.set('X-Cache', cache);
     res.json(payload);
   } catch (err) {

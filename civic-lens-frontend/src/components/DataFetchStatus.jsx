@@ -19,42 +19,61 @@ export function DataLoadingState({ message = 'Loading requests from API…' }) {
   );
 }
 
-export function DataErrorState({ error, onRetry }) {
+export function DataErrorState({
+  error,
+  onRetry,
+  message = 'Unable to load data. Please check the backend connection.',
+}) {
   const colors = useAppColors();
-  const message = error?.message || String(error || 'Failed to load data');
+  const detail = error?.message || (error ? String(error) : null);
 
   return (
-    <Alert
-      severity="error"
-      variant="outlined"
-      action={onRetry ? (
-        <Typography
-          component="button"
-          type="button"
-          onClick={onRetry}
-          sx={{
-            border: 0,
-            background: 'none',
-            cursor: 'pointer',
-            color: colors.error,
-            fontWeight: 600,
-            fontSize: '0.8125rem',
-          }}
-        >
-          Retry
-        </Typography>
-      ) : null}
+    <Box
       sx={{
-        borderColor: alpha(colors.error, 0.35),
-        bgcolor: alpha(colors.error, 0.05),
-        color: colors.textPrimary,
-        '& .MuiAlert-icon': { color: colors.error },
+        p: '24px',
+        borderRadius: '22px',
+        bgcolor: colors.cardSurface,
+        border: `1px solid ${alpha(colors.error, 0.35)}`,
+        boxShadow: colors.cardShadow,
       }}
     >
-      Backend unavailable — start the API server on port 5001 and ensure MongoDB is running.
-      {' '}
-      {message}
-    </Alert>
+      <Alert
+        severity="error"
+        variant="outlined"
+        action={onRetry ? (
+          <Typography
+            component="button"
+            type="button"
+            onClick={onRetry}
+            sx={{
+              border: 0,
+              background: 'none',
+              cursor: 'pointer',
+              color: colors.error,
+              fontWeight: 600,
+              fontSize: '0.8125rem',
+            }}
+          >
+            Retry
+          </Typography>
+        ) : null}
+        sx={{
+          border: 'none',
+          p: 0,
+          bgcolor: 'transparent',
+          color: colors.textPrimary,
+          '& .MuiAlert-icon': { color: colors.error },
+          '& .MuiAlert-message': { width: '100%' },
+        }}
+      >
+        {message}
+        {detail ? (
+          <Typography variant="caption" display="block" sx={{ mt: 0.75, color: colors.textSecondary }}>
+            {detail}
+          </Typography>
+        ) : null}
+      </Alert>
+    </Box>
   );
 }
 

@@ -27,8 +27,8 @@ function FeatureRow({ label, value, shap, positiveColor, negativeColor, colors }
   return (
     <Stack
       direction="row"
-      alignItems="center"
       sx={{
+        alignItems: 'center',
         py: 0.45,
         borderBottom: `1px solid ${colors.border}`,
         '&:last-child': { borderBottom: 0 },
@@ -100,7 +100,7 @@ export default function ModelFeatureTable({ request }) {
         '&:last-child': { pb: '22px' },
       }}
     >
-      <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mb: 0.75, flexShrink: 0 }}>
+      <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: 0.75, flexShrink: 0 }}>
         <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary }}>
           Model Inputs
         </Typography>

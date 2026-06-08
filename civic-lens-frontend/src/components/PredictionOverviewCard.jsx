@@ -159,7 +159,7 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
 
       {/* Delay risk score meter */}
       <Box sx={{ mt: 1.5 }}>
-        <Stack direction="row" alignItems="baseline" justifyContent="space-between" sx={{ mb: 0.6 }}>
+        <Stack direction="row" sx={{ alignItems: 'baseline', justifyContent: 'space-between', mb: 0.6 }}>
           <Typography sx={{ ...smallMetaSx, color: colors.textSecondary, letterSpacing: '0.04em' }}>
             Delay risk score
           </Typography>
@@ -191,8 +191,8 @@ export default function PredictionOverviewCard({ request, onViewRecord }) {
               const tone = up ? DRIVER_UP : DRIVER_DOWN;
               const Arrow = up ? ArrowUpwardRoundedIcon : ArrowDownwardRoundedIcon;
               return (
-                <Stack key={d.feature ?? i} direction="row" alignItems="center" justifyContent="space-between">
-                  <Stack direction="row" alignItems="center" spacing={0.75} sx={{ minWidth: 0 }}>
+                <Stack key={d.feature ?? i} direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minWidth: 0 }}>
                     <Arrow sx={{ fontSize: 15, color: tone, flexShrink: 0 }} />
                     <Typography variant="body2" noWrap sx={{ color: colors.textPrimary, fontWeight: 600, fontSize: '0.82rem' }}>
                       {driverLabel(d)}
