@@ -1,140 +1,303 @@
-import { Box, Typography, Tooltip, alpha } from '@mui/material';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
-import { useAppColors } from '../ColorModeContext';
-import { MODEL_BOTTOM_ROW_HEIGHT, cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import * as d3 from 'd3';
+import { Box, Typography, alpha } from '@mui/material';
+import { useAppColors, useColorMode } from '../ColorModeContext';
+import { cardSubtitleSx, cardTitleSx } from '../styles/modelViewLayout';
+import {
+  getBoroughShade,
+  getBoroughStrokeColor,
+  normalizeBoroughName,
+} from '../styles/dashboardColors';
+import boroughGeoRaw from '../data/nyc-boroughs.geojson?raw';
 import DashboardCard from './DashboardCard';
+import ChartTooltip from './ChartTooltip';
 
-const NYC_BOUNDS = {
-  lat: [40.49, 40.92],
-  lng: [-74.26, -73.68],
-};
+const boroughGeoJson = JSON.parse(boroughGeoRaw);
 
-const MAP_HEIGHT = 195;
+const MAP_HEIGHT = 210;
+const MAP_PADDING = { top: 10, right: 12, bottom: 10, left: 12 };
 
-function projectToPercent(lat, lng) {
-  const xPct = ((lng - NYC_BOUNDS.lng[0]) / (NYC_BOUNDS.lng[1] - NYC_BOUNDS.lng[0])) * 100;
-  const yPct = ((NYC_BOUNDS.lat[1] - lat) / (NYC_BOUNDS.lat[1] - NYC_BOUNDS.lat[0])) * 100;
-  return {
-    left: Math.min(94, Math.max(6, xPct)),
-    top: Math.min(90, Math.max(10, yPct)),
-  };
+function getBoroughFromFeature(feature) {
+  const raw = feature?.properties?.borough || feature?.properties?.name || 'Unknown';
+  return normalizeBoroughName(raw);
+}
+
+function isValidNycCoordinate(lat, lng) {
+  return Number.isFinite(lat)
+    && Number.isFinite(lng)
+    && lat >= 40.45
+    && lat <= 40.95
+    && lng >= -74.3
+    && lng <= -73.65;
+}
+
+function resolveCoordinates(request) {
+  const lat = Number(request?.latitude);
+  const lng = Number(request?.longitude);
+  if (!isValidNycCoordinate(lat, lng)) {
+    return { lat: null, lng: null, hasCoords: false };
+  }
+  return { lat, lng, hasCoords: true };
 }
 
 export default function RequestLocationPreview({ request }) {
   const colors = useAppColors();
+  const { mode } = useColorMode();
+  const containerRef = useRef(null);
+  const svgRef = useRef(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: MAP_HEIGHT });
+  const [tooltip, setTooltip] = useState(null);
+
+  const geoFeatures = useMemo(
+    () => boroughGeoJson.features.map((feature) => ({
+      ...feature,
+      borough: getBoroughFromFeature(feature),
+    })),
+    [],
+  );
+
+  const { lat, lng, hasCoords } = useMemo(
+    () => resolveCoordinates(request),
+    [request?.latitude, request?.longitude],
+  );
+
+  const requestBorough = normalizeBoroughName(request?.borough);
+
+  useEffect(() => {
+    const node = containerRef.current;
+    if (!node) return undefined;
+
+    const updateSize = () => {
+      const width = Math.max(node.clientWidth, 1);
+      setDimensions({ width, height: MAP_HEIGHT });
+    };
+
+    updateSize();
+    const observer = new ResizeObserver(updateSize);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (!svgRef.current || dimensions.width <= 0) return;
+
+    const { width, height } = dimensions;
+    const innerWidth = Math.max(width - MAP_PADDING.left - MAP_PADDING.right, 80);
+    const innerHeight = Math.max(height - MAP_PADDING.top - MAP_PADDING.bottom, 80);
+
+    const svg = d3.select(svgRef.current);
+    svg.selectAll('*').remove();
+    svg
+      .attr('width', width)
+      .attr('height', height)
+      .attr('viewBox', `0 0 ${width} ${height}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet')
+      .style('width', '100%')
+      .style('height', 'auto')
+      .style('display', 'block')
+      .attr('role', 'img')
+      .attr('aria-label', hasCoords
+        ? `Request location in ${requestBorough || 'NYC'}`
+        : 'NYC borough map — location unavailable');
+
+    const defs = svg.append('defs');
+    const panelGradient = defs
+      .append('linearGradient')
+      .attr('id', 'location-preview-bg')
+      .attr('x1', '0%')
+      .attr('y1', '0%')
+      .attr('x2', '100%')
+      .attr('y2', '100%');
+    panelGradient
+      .append('stop')
+      .attr('offset', '0%')
+      .attr('stop-color', mode === 'light' ? colors.mapOceanStart : colors.chartPlotBg);
+    panelGradient
+      .append('stop')
+      .attr('offset', '100%')
+      .attr('stop-color', mode === 'light' ? colors.mapOceanEnd : colors.cardElevated ?? colors.chartPlotBg);
+
+    const glowFilter = defs.append('filter').attr('id', 'location-dot-glow');
+    glowFilter.attr('x', '-50%').attr('y', '-50%').attr('width', '200%').attr('height', '200%');
+    glowFilter.append('feGaussianBlur').attr('stdDeviation', '2.2').attr('result', 'blur');
+    const glowMerge = glowFilter.append('feMerge');
+    glowMerge.append('feMergeNode').attr('in', 'blur');
+    glowMerge.append('feMergeNode').attr('in', 'SourceGraphic');
+
+    const root = svg
+      .append('g')
+      .attr('transform', `translate(${MAP_PADDING.left},${MAP_PADDING.top})`);
+
+    root
+      .append('rect')
+      .attr('width', innerWidth)
+      .attr('height', innerHeight)
+      .attr('rx', 12)
+      .attr('fill', 'url(#location-preview-bg)')
+      .attr('stroke', colors.border)
+      .attr('stroke-width', 1);
+
+    const projection = d3.geoMercator();
+    const path = d3.geoPath().projection(projection);
+    projection.fitSize([innerWidth - 16, innerHeight - 16], boroughGeoJson);
+
+    const mapLayer = root
+      .append('g')
+      .attr('transform', 'translate(8, 8)');
+
+    mapLayer
+      .selectAll('.borough-shape')
+      .data(geoFeatures, (d) => d.borough)
+      .join('path')
+      .attr('class', 'borough-shape')
+      .attr('d', (d) => path(d))
+      .attr('fill', (d) => getBoroughShade(d.borough, mode, 'map'))
+      .attr('fill-opacity', (d) => (
+        requestBorough && d.borough === requestBorough ? 0.82 : 0.55
+      ))
+      .attr('stroke', (d) => getBoroughStrokeColor(d.borough, mode))
+      .attr('stroke-width', (d) => (
+        requestBorough && d.borough === requestBorough ? 1.8 : 1.1
+      ))
+      .attr('opacity', (d) => (
+        requestBorough && d.borough !== requestBorough ? 0.72 : 0.94
+      ));
+
+    if (hasCoords) {
+      const [x, y] = projection([lng, lat]);
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        const dotGroup = mapLayer
+          .append('g')
+          .attr('class', 'request-dot')
+          .attr('transform', `translate(${x},${y})`)
+          .style('cursor', 'default');
+
+        dotGroup
+          .append('circle')
+          .attr('r', 10)
+          .attr('fill', alpha(colors.accentPink, 0.18))
+          .attr('stroke', 'none');
+
+        dotGroup
+          .append('circle')
+          .attr('r', 5.5)
+          .attr('fill', colors.accentPink)
+          .attr('stroke', mode === 'light' ? '#ffffff' : colors.textPrimary)
+          .attr('stroke-width', 1.5)
+          .attr('filter', 'url(#location-dot-glow)')
+          .on('mouseenter', (event) => {
+            setTooltip({
+              x: event.offsetX,
+              y: event.offsetY,
+              data: request,
+            });
+          })
+          .on('mousemove', (event) => {
+            setTooltip((prev) => (prev ? { ...prev, x: event.offsetX, y: event.offsetY } : prev));
+          })
+          .on('mouseleave', () => setTooltip(null));
+      }
+    } else {
+      mapLayer
+        .append('text')
+        .attr('x', (innerWidth - 16) / 2)
+        .attr('y', (innerHeight - 16) / 2)
+        .attr('text-anchor', 'middle')
+        .attr('dominant-baseline', 'middle')
+        .attr('fill', colors.textSecondary)
+        .attr('font-size', 13)
+        .attr('font-weight', 600)
+        .text('Location unavailable');
+    }
+  }, [
+    dimensions,
+    hasCoords,
+    lat,
+    lng,
+    mode,
+    colors,
+    geoFeatures,
+    request,
+    requestBorough,
+  ]);
 
   if (!request) {
-    return (
-      <DashboardCard
-        sx={{ width: '100%' }}
-        contentSx={{
-          p: '22px',
-          height: MODEL_BOTTOM_ROW_HEIGHT,
-          width: '100%',
-          boxSizing: 'border-box',
-          '&:last-child': { pb: '22px' },
-        }}
-      >
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, mb: 1 }}>
-          Location
-        </Typography>
-        <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary }}>No case selected.</Typography>
-      </DashboardCard>
-    );
+    return null;
   }
 
-  const lat = Number(request.latitude);
-  const lng = Number(request.longitude);
-  const hasCoords = Number.isFinite(lat) && Number.isFinite(lng);
-  const marker = hasCoords ? projectToPercent(lat, lng) : { left: 50, top: 50 };
+  const address = request.incident_address?.trim() || 'Address unavailable';
+  const boroughLabel = request.borough ?? '—';
+  const zipLabel = request.incident_zip ?? '—';
 
   return (
     <DashboardCard
-      sx={{ width: '100%' }}
+      sx={{ width: '100%', height: '100%' }}
       contentSx={{
         p: '22px',
-        height: MODEL_BOTTOM_ROW_HEIGHT,
         width: '100%',
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
+        gap: 1.25,
         '&:last-child': { pb: '22px' },
       }}
     >
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1, flexShrink: 0 }}>
-        <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary }}>
-          Location
-        </Typography>
-        <Tooltip title="Full NYC map will be added in the Dashboard view." arrow placement="top">
-          <InfoOutlinedIcon sx={{ fontSize: 14, color: colors.textSecondary, cursor: 'help' }} />
-        </Tooltip>
-      </Box>
+      <Typography variant="subtitle2" sx={{ ...cardTitleSx, color: colors.textSecondary, flexShrink: 0 }}>
+        Request Location
+      </Typography>
 
       <Box
+        ref={containerRef}
         sx={{
           position: 'relative',
           width: '100%',
-          height: MAP_HEIGHT,
+          minWidth: 0,
           flexShrink: 0,
           borderRadius: 2,
           overflow: 'hidden',
-          bgcolor: colors.chartPlotBg,
-          border: `1px solid ${colors.border}`,
         }}
       >
-        <Box
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            backgroundImage: `
-              linear-gradient(${colors.gridStroke} 1px, transparent 1px),
-              linear-gradient(90deg, ${colors.gridStroke} 1px, transparent 1px)
-            `,
-            backgroundSize: '18px 18px',
-            opacity: 0.65,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            left: `${marker.left}%`,
-            top: `${marker.top}%`,
-            transform: 'translate(-50%, -50%)',
-            width: 10,
-            height: 10,
-            borderRadius: '50%',
-            bgcolor: colors.error,
-            border: `2px solid ${colors.textPrimary}`,
-            boxShadow: `0 0 0 4px ${alpha(colors.error, 0.2)}`,
-          }}
-        />
+        <svg ref={svgRef} />
+        {tooltip ? (
+          <ChartTooltip
+            x={tooltip.x}
+            y={tooltip.y}
+            title={tooltip.data?.complaint_type || 'Request'}
+            rows={[
+              { label: 'Borough', value: tooltip.data?.borough ?? '—' },
+              { label: 'ZIP', value: tooltip.data?.incident_zip ?? '—' },
+              { label: 'Agency', value: tooltip.data?.agency ?? '—' },
+              { label: 'Status', value: tooltip.data?.status ?? '—' },
+            ]}
+            compact
+          />
+        ) : null}
       </Box>
 
-      <Box sx={{ mt: 1.25, minWidth: 0, flex: 1 }}>
+      <Box sx={{ minWidth: 0 }}>
         <Typography
           variant="body1"
           noWrap
-          title={request.incident_address || 'Address unavailable'}
-          sx={{ color: colors.textPrimary, fontWeight: 600, fontSize: '0.9375rem', lineHeight: 1.35 }}
+          title={address}
+          sx={{
+            color: colors.textPrimary,
+            fontWeight: 600,
+            fontSize: '0.9375rem',
+            lineHeight: 1.35,
+          }}
         >
-          {request.incident_address || 'Address unavailable'}
+          {address}
         </Typography>
         <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textSecondary, mt: 0.35 }}>
-          {request.borough ?? '—'} · ZIP {request.incident_zip ?? '—'}
+          {boroughLabel} · ZIP {zipLabel}
         </Typography>
-        {hasCoords && (
-          <Typography
-            variant="body2"
-            sx={{
-              ...cardSubtitleSx,
-              color: colors.textSecondary,
-              mt: 0.35,
-              fontFamily: 'ui-monospace, monospace',
-            }}
-          >
-            {lat.toFixed(5)}, {lng.toFixed(5)}
+        {request.complaint_type ? (
+          <Typography variant="body2" sx={{ ...cardSubtitleSx, color: colors.textMuted, mt: 0.35 }}>
+            {request.complaint_type}
+            {request.agency ? ` · ${request.agency}` : ''}
+            {request.status ? ` · ${request.status}` : ''}
           </Typography>
-        )}
+        ) : null}
       </Box>
     </DashboardCard>
   );

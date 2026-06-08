@@ -30,9 +30,9 @@ function MapSkeletonSlot() {
 }
 
 export default function MapPage({ onNavigate }) {
-  const { filters: dashboardFilters, setPendingModelCaseKey } = useFilters();
+  const { setPendingModelCaseKey } = useFilters();
   const { beginUserLoad } = useAppSnackbar();
-  const [mapFilters, setMapFilters] = useState(() => ({ ...dashboardFilters }));
+  const [mapFilters, setMapFilters] = useState(() => ({ ...DEFAULT_FILTERS }));
   const [colorMode, setColorMode] = useState('delayBucket');
   const [highDelayOnly, setHighDelayOnly] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);

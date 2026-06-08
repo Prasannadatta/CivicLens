@@ -28,6 +28,8 @@ import {
   PAGE_SECTION_GAP,
 } from '../styles/modelViewLayout';
 
+const MODEL_HEADER_GAP = '24px';
+
 const GRID_12 = {
   display: 'grid',
   gridTemplateColumns: 'repeat(12, minmax(0, 1fr))',
@@ -327,20 +329,30 @@ export default function ModelPage() {
           gap: PAGE_SECTION_GAP,
         }}
       >
-        <PageIntro
-          page="model"
-          eyebrow="Prediction + Explainability"
-          title="Model Explanation"
-          description="Select a 311 request to inspect its CatBoost-predicted response delay, delay bucket, model inputs, and SHAP-based explanation."
-        />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: MODEL_HEADER_GAP,
+            width: '100%',
+            minWidth: 0,
+          }}
+        >
+          <PageIntro
+            page="model"
+            eyebrow="Prediction + Explainability"
+            title="Model Explanation"
+            description="Select a 311 request to inspect its CatBoost-predicted response delay, delay bucket, model inputs, and SHAP-based explanation."
+          />
 
-        <PredictionCaseSelector
-          initialFilters={filters}
-          selectedRequest={selectedStub ?? displayCase}
-          onSelectRequest={handleSelectCase}
-          onFirstRecords={handleFirstRecords}
-          onCasesEmpty={handleCasesEmpty}
-        />
+          <PredictionCaseSelector
+            initialFilters={filters}
+            selectedRequest={selectedStub ?? displayCase}
+            onSelectRequest={handleSelectCase}
+            onFirstRecords={handleFirstRecords}
+            onCasesEmpty={handleCasesEmpty}
+          />
+        </Box>
 
         <PageLoadingBar loading={showLoadingState} page="model" />
 
@@ -387,28 +399,36 @@ export default function ModelPage() {
           </>
         ) : null}
 
-        {!showLoadingState && hasCaseData ? (
-          <>
+        {!showLoadingState && activeCase ? (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: PAGE_GRID_GAP,
+              width: '100%',
+              minWidth: 0,
+            }}
+          >
             <Box sx={GRID_12}>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minHeight: 0, display: 'flex' }}>
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 4' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
                 <PredictionOverviewCard
-                  request={displayCase}
-                  onViewRecord={() => handleOpenDrawer(displayCase)}
+                  request={activeCase}
+                  onViewRecord={() => handleOpenDrawer(activeCase)}
                 />
               </Box>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minHeight: 0, display: 'flex' }}>
-                <ShapExplanationPanel request={displayCase} />
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 8' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+                <ShapExplanationPanel request={activeCase} />
               </Box>
             </Box>
             <Box sx={GRID_12}>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minHeight: 0, display: 'flex' }}>
-                <ModelFeatureTable request={displayCase} />
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 7' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+                <ModelFeatureTable request={activeCase} />
               </Box>
-              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minHeight: 0, display: 'flex' }}>
-                <RequestLocationPreview request={displayCase} />
+              <Box sx={{ gridColumn: { xs: '1 / -1', md: 'span 5' }, minWidth: 0, minHeight: 0, display: 'flex' }}>
+                <RequestLocationPreview request={activeCase} />
               </Box>
             </Box>
-          </>
+          </Box>
         ) : null}
       </Box>
 
