@@ -148,39 +148,24 @@ The processed dataset is **too large for GitHub** and is shared as a compressed 
 
 This is the **recommended demo path** for running Civic Lens.
 
-The processed 2026 NYC 311 dataset contains about **1.5 million records**. Because the dataset is too large for GitHub, it is shared as a compressed ZIP file through Box.
+The processed 2026 NYC 311 dataset used for the demo is shared through **UC Davis Box** because it is too large to include directly in GitHub. The dataset contains about **1.5 million records**.
+
+Download the preprocessed data ZIP here:
+
+https://ucdavis.box.com/s/grxfjjo1uoc7y8w5htuwuzj4oh89utle
 
 **Steps:**
 
-1. **Download the processed data ZIP from Box:**
-
-   <PASTE_BOX_LINK_HERE>
-
-2. **Extract the ZIP file.**
-
+1. **Download the ZIP** from the Box link above.
+2. **Extract the ZIP.**
 3. **Start local MongoDB.**
-
-4. **Import the extracted data into the local `civic_lens` database.**
-
-   If the ZIP contains JSON:
+4. **Import the JSON file** into the local `civic_lens` database:
 
    ```bash
-   mongoimport --db civic_lens --collection requests_clean --file requests_clean.json --jsonArray
+   mongoimport --db civic_lens --collection requests_clean --file nyc_311_2026.json
    ```
 
-   If the ZIP contains multiple JSON files, use the matching collection names:
-
-   ```bash
-   mongoimport --db civic_lens --collection <collection_name> --file <file_name>.json --jsonArray
-   ```
-
-   If the ZIP contains a BSON dump:
-
-   ```bash
-   mongorestore --db civic_lens <path_to_extracted_dump_folder>
-   ```
-
-   > Use the exact collection and file names from the extracted ZIP contents.
+   > This JSON file is expected to be newline-delimited JSON from `mongoexport`, so `--jsonArray` is not needed. If the file is inside an extracted folder, run the command from that folder or provide the full file path.
 
 5. **Create `backend/.env`:**
 
@@ -191,7 +176,7 @@ The processed 2026 NYC 311 dataset contains about **1.5 million records**. Becau
    APP_TOKEN=<YOUR_NYC_OPEN_DATA_APP_TOKEN>
    ```
 
-   `APP_TOKEN` is optional for dashboard-only use with the imported Box data.
+   `APP_TOKEN` is optional for running the dashboard with the Box data, but required if you want to rerun the NYC Open Data download/preprocessing scripts.
 
 6. **Start the backend and frontend:**
 
