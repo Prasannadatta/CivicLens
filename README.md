@@ -28,7 +28,7 @@ CivicLens/
 │   ├── routes/              # REST API routes
 │   ├── services/            # Aggregations, facets, predictions
 │   └── utils/               # Query filters, delay buckets, normalization
-├── preprocessing-training/  # Python scripts for download, cleaning, features, training, SHAP
+├── preprocessing-training/  # Download, cleaning, features, training, MongoDB prediction/SHAP storage
 ├── data/                    # Local folder for intermediate/processed files (not committed)
 ├── package.json             # Root scripts to run frontend + backend together
 └── README.md
@@ -39,7 +39,7 @@ CivicLens/
 | `civic-lens-frontend/` | Interactive UI, filters, charts, and map |
 | `backend/` | REST API, MongoDB access, optional live ML inference |
 | `backend/ML/` | CatBoost batch prediction script used by the API |
-| `preprocessing-training/` | Data download, preprocessing, feature engineering, model training, SHAP generation |
+| `preprocessing-training/` | Data download, preprocessing, feature engineering, model training, prediction + SHAP storage in MongoDB |
 | `data/` | Placeholder for large local parquet/JSON outputs (not in GitHub) |
 
 The processed dataset is **too large for GitHub** and is shared as a compressed ZIP through **Box**.
@@ -158,8 +158,40 @@ https://ucdavis.box.com/s/grxfjjo1uoc7y8w5htuwuzj4oh89utle
 
 1. **Download the ZIP** from the Box link above.
 2. **Extract the ZIP.**
-3. **Start local MongoDB.**
-4. **Import the JSON file** into the local `civic_lens` database:
+3. **Start local MongoDB and import the data.**
+
+   You can use either **MongoDB Compass** or the command line.
+
+   **Option A: MongoDB Compass**
+
+   1. Open MongoDB Compass.
+   2. Connect using:
+
+      ```text
+      mongodb://127.0.0.1:27017
+      ```
+
+   3. Click **Create Database**.
+   4. Use:
+
+      ```text
+      Database Name: civic_lens
+      Collection Name: requests_clean
+      ```
+
+   5. Open the `requests_clean` collection.
+   6. Click **Add Data → Import JSON or CSV file**.
+   7. Select the extracted file:
+
+      ```text
+      nyc_311_2026.json
+      ```
+
+   8. Choose **JSON** and start the import.
+
+   **Option B: Command line**
+
+   Make sure MongoDB is running locally, then run:
 
    ```bash
    mongoimport --db civic_lens --collection requests_clean --file nyc_311_2026.json
@@ -167,7 +199,7 @@ https://ucdavis.box.com/s/grxfjjo1uoc7y8w5htuwuzj4oh89utle
 
    > This JSON file is expected to be newline-delimited JSON from `mongoexport`, so `--jsonArray` is not needed. If the file is inside an extracted folder, run the command from that folder or provide the full file path.
 
-5. **Create `backend/.env`:**
+4. **Create `backend/.env`:**
 
    ```env
    MONGODB_URI=mongodb://127.0.0.1:27017
@@ -178,7 +210,7 @@ https://ucdavis.box.com/s/grxfjjo1uoc7y8w5htuwuzj4oh89utle
 
    `APP_TOKEN` is optional for running the dashboard with the Box data, but required if you want to rerun the NYC Open Data download/preprocessing scripts.
 
-6. **Start the backend and frontend:**
+5. **Start the backend and frontend:**
 
    From the project root:
 
@@ -198,7 +230,7 @@ https://ucdavis.box.com/s/grxfjjo1uoc7y8w5htuwuzj4oh89utle
    npm run dev
    ```
 
-7. **Open** [http://localhost:5173](http://localhost:5173) and explore the **Dashboard**, **Map**, and **Model Explanation** views.
+6. **Open** [http://localhost:5173](http://localhost:5173) and explore the **Dashboard**, **Map**, and **Model Explanation** views.
 
 ---
 
@@ -214,7 +246,8 @@ Scripts live in `preprocessing-training/`:
 |--------|---------|
 | `data.py` | Download, clean, and load NYC 311 records into MongoDB |
 | `train-val-test-data.py` | Feature engineering with chronological splits |
-| `training.py` | CatBoost training, evaluation, predictions, and SHAP generation |
+| `training.py` | CatBoost training, evaluation, and model export |
+| `store-prediction-mongodb.py` | Run inference on open requests, compute SHAP values, and write predictions + explanations into `requests_clean` |
 
 **Python dependencies:**
 
@@ -226,12 +259,12 @@ pip install pandas pymongo requests holidays catboost scikit-learn joblib pyarro
 
 1. Get an NYC Open Data app token.
 2. Add it to `backend/.env` as `APP_TOKEN`.
-3. Start local MongoDB.
-4. Run scripts in `preprocessing-training/` to download and clean NYC 311 records.
-5. Run feature-engineering scripts to create historical agency, ZIP, borough, complaint, and workload features.
-6. Run CatBoost training scripts (`training.py`).
-7. Generate predictions and SHAP explanations.
-8. Import or verify outputs in MongoDB (`requests_clean` collection).
+3. Start local MongoDB using MongoDB Compass or your system's MongoDB service.
+4. Run `data.py` to download and clean NYC 311 records.
+5. Run `train-val-test-data.py` to create historical agency, ZIP, borough, complaint, and workload features.
+6. Run `training.py` to train and evaluate the CatBoost model.
+7. Run `store-prediction-mongodb.py` to generate predictions and SHAP explanations and store them in MongoDB (`requests_clean`).
+8. Verify enriched records in MongoDB.
 9. Start the backend and frontend (`npm run dev` from the project root).
 
 > This path may take significant time and disk space because the NYC 311 dataset is large. For a faster review, use the [Box data setup](#data-setup-processed-2026-data-from-box).
