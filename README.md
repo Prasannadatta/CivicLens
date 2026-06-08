@@ -267,14 +267,14 @@ Civic Lens supports:
 
 ## Division of Labor
 
-- **Prasannadatta Kawadkar:** data preprocessing, MongoDB setup, feature engineering, CatBoost model training/evaluation, SHAP explanations, backend/model integration, documentation.
-- **Hetvi Sanjaybhai Bhadani:** frontend dashboard design, D3/Leaflet visualizations, map interactions, UI layout, coordinated filtering, testing, report/demo support.
+Work was divided **equally** between both team members:
 
----
+- **Prasannadatta Kawadkar**
+- **Hetvi Sanjaybhai Bhadani**
 
-## Optional Demo Video
+Both contributed to data preprocessing, backend/API development, model integration, frontend dashboard and visualization design, map and model explanation views, testing, documentation, and final demo preparation.
 
-A short installation/execution demo video is available here: **<PASTE_UNLISTED_YOUTUBE_LINK_HERE>**
+
 
 ---
 
