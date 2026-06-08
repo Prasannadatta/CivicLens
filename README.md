@@ -1,118 +1,304 @@
 # Civic Lens
 
-Civic Lens is an interactive visual analytics system for exploring NYC 311 service requests. It helps users understand where city service delays happen, which complaint types create the most burden, and why some requests are predicted to take longer.
+## Description
 
-## Features
+Civic Lens is a visual analytics system for NYC 311 service requests. It helps users understand not only how many complaints are submitted, but also how long requests take to resolve, which neighborhoods experience delays, which complaint types repeat, and what factors drive predicted service delay.
 
-- **Home:** Project overview and system introduction
-- **Dashboard:** Borough burden, complaint drivers, and delay trends
-- **NYC Map:** Request-level spatial exploration using latitude and longitude
-- **Model View:** Predicted response delay with SHAP-style explanations
-- **Filters:** Explore data by borough, agency, complaint type, status, and delay bucket
-- **Light/Dark Mode:** Responsive interface with shared styling
+The system combines end-to-end data processing, machine learning, and interactive visualization. Raw NYC 311 records are cleaned and stored in **MongoDB**. A **CatBoost** regression model predicts response time for open requests, and **SHAP** values provide request-level explanations of those predictions. The **React** frontend presents three linked views—**Dashboard**, **Map**, and **Model Explanation**—built with **D3.js**, **Recharts**, and **Leaflet**, backed by a **Node.js/Express** API with server-side filtering and indexed MongoDB queries.
 
-## Tech Stack
+Civic Lens is designed for **residents**, **city agencies**, **urban planners**, and **community groups** who want to explore service burden, compare boroughs and complaint types, inspect spatial patterns, and understand why certain open requests are predicted to take longer than others.
 
-- React + Vite
-- Material UI
-- D3.js / Recharts
-- Leaflet / React-Leaflet
-- Node.js + Express
-- MongoDB / Mongoose
-- CatBoost model through Python subprocess
+---
 
-## Prerequisites
-
-Install the following before running the project:
-
-- Node.js 18+
-- MongoDB local instance or MongoDB Atlas
-- Python 3.10+ only if using live CatBoost prediction endpoints
-
-## Installation
-
-From the project root:
-
-```bash
-npm install
-npm run install:all
-cp backend/.env.example backend/.env   # if not already done
-```
-
-Edit `backend/.env` and set your MongoDB connection string. The defaults work for a local MongoDB instance:
-
-```env
-MONGODB_URI=mongodb://127.0.0.1:27017
-DB_NAME=civic_lens
-PORT=5001
-```
-
-## Run the App
-
-Start both the frontend and backend together:
-
-```bash
-npm run dev
-```
-
-Then open [http://localhost:5173](http://localhost:5173) in your browser.
-
-- **Frontend:** Vite dev server on port 5173
-- **Backend:** Express API on port 5001 (proxied through Vite during development)
-
-Check that the backend is healthy:
-
-```bash
-curl http://localhost:5001/api/health
-```
-
-To debug one service at a time:
-
-```bash
-npm run dev:frontend
-npm run dev:backend
-```
-
-## How It Works
-
-The app reads NYC 311 request data from MongoDB. The Dashboard and Map show borough burden, complaint trends, and request locations. The Model View focuses on open requests with predicted response delays and explanation factors.
-
-Large datasets are not stored in this repo. Data should be loaded into MongoDB separately. The API serves records from the `requests_clean` collection, filtered by year (default **2026**).
-
-For live predictions and SHAP explanations, install Python dependencies and place the trained model:
-
-```bash
-cd backend
-pip install -r ML/requirements.txt
-# cp /path/to/catboost_model.pkl ML/catboost_model.pkl
-```
-
-## Project Structure
+## Repository Structure
 
 ```
 CivicLens/
-├── civic-lens-frontend/   # React + Vite UI
-├── backend/               # Express API, MongoDB models, ML scripts
-├── package.json           # Root dev scripts
+├── civic-lens-frontend/     # React + Vite UI (Dashboard, Map, Model views)
+│   └── src/
+│       ├── api/             # API fetch helpers
+│       ├── components/      # D3, Recharts, and Leaflet visualizations
+│       ├── context/         # Shared filter state
+│       ├── hooks/           # Data-fetching hooks
+│       └── pages/           # Home, Dashboard, Map, Model
+├── backend/                 # Node.js + Express API
+│   ├── controllers/         # Route handlers
+│   ├── ML/                  # CatBoost Python inference (predict_batch.py)
+│   ├── models/              # Mongoose schemas
+│   ├── routes/              # REST API routes
+│   ├── services/            # Aggregations, facets, predictions
+│   └── utils/               # Query filters, delay buckets, normalization
+├── preprocessing-training/  # Python scripts for download, cleaning, features, training, SHAP
+├── data/                    # Local folder for intermediate/processed files (not committed)
+├── package.json             # Root scripts to run frontend + backend together
 └── README.md
 ```
 
-## Troubleshooting
+| Folder | Purpose |
+|--------|---------|
+| `civic-lens-frontend/` | Interactive UI, filters, charts, and map |
+| `backend/` | REST API, MongoDB access, optional live ML inference |
+| `backend/ML/` | CatBoost batch prediction script used by the API |
+| `preprocessing-training/` | Data download, preprocessing, feature engineering, model training, SHAP generation |
+| `data/` | Placeholder for large local parquet/JSON outputs (not in GitHub) |
 
-**Frontend does not load** — Make sure port 5173 is free and Vite started without errors.
+The processed dataset is **too large for GitHub** and is shared as a compressed ZIP through **Box**.
 
-**Backend fails to start** — Check `backend/.env`, confirm MongoDB is running, and verify your Atlas IP allowlist if using Atlas.
+---
 
-**Fetch errors in the browser** — The backend must be running on port 5001.
+## Installation
 
-**Empty dashboard or map** — Confirm data exists in MongoDB for the configured year (default 2026).
+### Prerequisites
 
-**Model view missing predictions** — Install Python deps, add `catboost_model.pkl`, and ensure open requests exist in the database.
+- **Node.js** 18+
+- **MongoDB** (local instance)
+- **Python 3.10+** (only for full reproduction from NYC Open Data or live ML inference)
 
-**Port already in use** — Stop the other process or change `PORT` in `backend/.env`.
+### Common Setup
 
-**Unclear startup failure** — Run `npm run dev:frontend` and `npm run dev:backend` separately to see which service fails.
+1. **Clone the repository.**
+
+   ```bash
+   git clone <PASTE_GITHUB_REPO_URL_HERE>
+   cd CivicLens
+   ```
+
+2. **Install backend dependencies.**
+
+   ```bash
+   cd backend
+   npm install
+   cd ..
+   ```
+
+   Or from the project root:
+
+   ```bash
+   npm run install:all
+   ```
+
+3. **Install frontend dependencies.**
+
+   ```bash
+   cd civic-lens-frontend
+   npm install
+   cd ..
+   ```
+
+   *(Skipped if you already ran `npm run install:all` from the root.)*
+
+4. **Download the processed data from Box and import it into local MongoDB** — see [Data Setup: Processed 2026 Data From Box](#data-setup-processed-2026-data-from-box).
+
+5. **Create or update `backend/.env` for local MongoDB.**
+
+   ```bash
+   cp backend/.env.example backend/.env
+   ```
+
+   ```env
+   MONGODB_URI=mongodb://127.0.0.1:27017
+   DB_NAME=civic_lens
+   PORT=5001
+   APP_TOKEN=<YOUR_NYC_OPEN_DATA_APP_TOKEN>
+   ```
+
+   `APP_TOKEN` is only needed if you plan to run data download or preprocessing scripts. It is **not required** to run the dashboard with the Box data.
+
+6. **Start the backend and frontend.**
+
+   From the project root:
+
+   ```bash
+   npm install          # root dev tools (concurrently), if not done yet
+   npm run dev
+   ```
+
+   Or separately:
+
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+   ```bash
+   cd civic-lens-frontend
+   npm run dev
+   ```
+
+   Open [http://localhost:5173](http://localhost:5173). Vite proxies `/api/*` to the backend during development.
+
+   Verify the API:
+
+   ```bash
+   curl http://localhost:5001/api/health
+   ```
+
+### Environment variables
+
+| Variable | Description |
+|----------|-------------|
+| `MONGODB_URI` | Local MongoDB connection string (default: `mongodb://127.0.0.1:27017`) |
+| `DB_NAME` | Database name (default: `civic_lens`) |
+| `PORT` | API port (default: `5001`) |
+| `APP_TOKEN` | NYC Open Data app token — required only for full reproduction scripts |
+
+---
+
+## Data Setup: Processed 2026 Data From Box
+
+This is the **recommended demo path** for running Civic Lens.
+
+The processed 2026 NYC 311 dataset contains about **1.5 million records**. Because the dataset is too large for GitHub, it is shared as a compressed ZIP file through Box.
+
+**Steps:**
+
+1. **Download the processed data ZIP from Box:**
+
+   <PASTE_BOX_LINK_HERE>
+
+2. **Extract the ZIP file.**
+
+3. **Start local MongoDB.**
+
+4. **Import the extracted data into the local `civic_lens` database.**
+
+   If the ZIP contains JSON:
+
+   ```bash
+   mongoimport --db civic_lens --collection requests_clean --file requests_clean.json --jsonArray
+   ```
+
+   If the ZIP contains multiple JSON files, use the matching collection names:
+
+   ```bash
+   mongoimport --db civic_lens --collection <collection_name> --file <file_name>.json --jsonArray
+   ```
+
+   If the ZIP contains a BSON dump:
+
+   ```bash
+   mongorestore --db civic_lens <path_to_extracted_dump_folder>
+   ```
+
+   > Use the exact collection and file names from the extracted ZIP contents.
+
+5. **Create `backend/.env`:**
+
+   ```env
+   MONGODB_URI=mongodb://127.0.0.1:27017
+   DB_NAME=civic_lens
+   PORT=5001
+   APP_TOKEN=<YOUR_NYC_OPEN_DATA_APP_TOKEN>
+   ```
+
+   `APP_TOKEN` is optional for dashboard-only use with the imported Box data.
+
+6. **Start the backend and frontend:**
+
+   From the project root:
+
+   ```bash
+   npm run dev
+   ```
+
+   Or separately:
+
+   ```bash
+   cd backend
+   npm run dev
+   ```
+
+   ```bash
+   cd civic-lens-frontend
+   npm run dev
+   ```
+
+7. **Open** [http://localhost:5173](http://localhost:5173) and explore the **Dashboard**, **Map**, and **Model Explanation** views.
+
+---
+
+## Full Reproduction From Original NYC Open Data
+
+This section is **optional**. Use it only if you want to download the original NYC 311 data yourself and repeat preprocessing, feature engineering, model training, prediction generation, and SHAP explanation generation.
+
+Original data source: [NYC Open Data 311 Service Requests](https://data.cityofnewyork.us/Social-Services/311-Service-Requests-from-2010-to-Present/erm2-nwe9).
+
+Scripts live in `preprocessing-training/`:
+
+| Script | Purpose |
+|--------|---------|
+| `data.py` | Download, clean, and load NYC 311 records into MongoDB |
+| `train-val-test-data.py` | Feature engineering with chronological splits |
+| `training.py` | CatBoost training, evaluation, predictions, and SHAP generation |
+
+**Python dependencies:**
+
+```bash
+pip install pandas pymongo requests holidays catboost scikit-learn joblib pyarrow shap
+```
+
+**Steps:**
+
+1. Get an NYC Open Data app token.
+2. Add it to `backend/.env` as `APP_TOKEN`.
+3. Start local MongoDB.
+4. Run scripts in `preprocessing-training/` to download and clean NYC 311 records.
+5. Run feature-engineering scripts to create historical agency, ZIP, borough, complaint, and workload features.
+6. Run CatBoost training scripts (`training.py`).
+7. Generate predictions and SHAP explanations.
+8. Import or verify outputs in MongoDB (`requests_clean` collection).
+9. Start the backend and frontend (`npm run dev` from the project root).
+
+> This path may take significant time and disk space because the NYC 311 dataset is large. For a faster review, use the [Box data setup](#data-setup-processed-2026-data-from-box).
+
+---
+
+## Functionality
+
+Civic Lens supports:
+
+- **City-level service burden overview** — KPIs, borough burden choropleth, complaint driver rankings
+- **Borough / complaint / agency / status / delay-bucket filtering** — cascading filters with server-side MongoDB queries
+- **Interactive map** — NYC request markers colored by delay bucket or complaint type; click open requests to jump to model explanation
+- **Delay bucket visualization** — Same Day, 1–3 Days, 3–7 Days, More than 1 Week (predicted buckets for open requests, actual buckets for closed)
+- **Request-level prediction** — CatBoost predicted response hours for open/unresolved requests
+- **SHAP-based model explanation** — Waterfall chart of features that increase or decrease predicted delay
+- **Linked views** — Dashboard filters seed the map on first load; map maintains its own filter state after user interaction
+- **Responsive querying** — MongoDB indexing, aggregation caching, and debounced API filtering (~300ms)
+
+**D3.js** is used for the major custom visualizations (borough choropleth, complaint ranking bars, SHAP waterfall). **Recharts** powers the delay timeline; **Leaflet** powers the map.
+
+---
+
+## Model and Data Notes
+
+- **Target:** CatBoost predicts `log(1 + response_hours)` and converts back to hours for display.
+- **Features:** Agency, ZIP, borough, complaint type, channel, time (month, hour, day of week, season), holiday/weekend flags, urgency score, agency workload, and historical median delay features.
+- **Precomputed predictions:** Predictions and SHAP values are stored in MongoDB so the frontend stays fast at scale.
+- **Open vs. closed:** Open requests (`is_unresolved = 1`) show predicted delay buckets and ML explanations. Closed requests use **actual** delay buckets from `response_hours`.
+- **Showcase year:** The API filters to **2026** records by default (`SHOWCASE_YEAR` env var).
+
+---
+
+## Division of Labor
+
+- **Prasannadatta Kawadkar:** data preprocessing, MongoDB setup, feature engineering, CatBoost model training/evaluation, SHAP explanations, backend/model integration, documentation.
+- **Hetvi Sanjaybhai Bhadani:** frontend dashboard design, D3/Leaflet visualizations, map interactions, UI layout, coordinated filtering, testing, report/demo support.
+
+---
+
+## Optional Demo Video
+
+A short installation/execution demo video is available here: **<PASTE_UNLISTED_YOUTUBE_LINK_HERE>**
+
+---
+
+## Submission Note
+
+This GitHub repository contains **source code**, **preprocessing/model scripts**, and **setup instructions**. Large processed data files are shared through **Box** instead of being committed to GitHub, following the course submission guidelines.
+
+---
 
 ## Course
 
-Built for ECS 273 at UC Davis.
+Built for **ECS 273** at UC Davis.
