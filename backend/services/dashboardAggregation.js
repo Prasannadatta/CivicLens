@@ -44,7 +44,16 @@ const MAP_POINT_SELECT = [
 ].join(' ');
 
 const NYC_BOROUGHS = ['Manhattan', 'Brooklyn', 'Queens', 'Bronx', 'Staten Island'];
-const MAP_SAMPLE_SIZE = 2000;
+const DEFAULT_MAP_POINT_LIMIT = Number(process.env.MAP_POINT_LIMIT || 5000);
+const MAX_MAP_POINT_LIMIT = Number(process.env.MAX_MAP_POINT_LIMIT || 10000);
+
+export function resolveMapPointLimit(queryLimit) {
+  const requested = Number(queryLimit);
+  if (!Number.isFinite(requested) || requested <= 0) {
+    return DEFAULT_MAP_POINT_LIMIT;
+  }
+  return Math.min(Math.floor(requested), MAX_MAP_POINT_LIMIT);
+}
 
 function coordFilter(filter) {
   return {
@@ -149,19 +158,20 @@ function normalizeMapRecords(records) {
   return records.map(normalizeMapPoint).filter(Boolean);
 }
 
-export async function fetchFastMapPoints(filter) {
+export async function fetchFastMapPoints(filter, sampleSize = DEFAULT_MAP_POINT_LIMIT) {
   const match = coordFilter(filter);
+  const limit = resolveMapPointLimit(sampleSize);
 
   if (match.borough) {
     const records = await Request.find(match)
       .select(MAP_POINT_SELECT)
-      .limit(MAP_SAMPLE_SIZE)
+      .limit(limit)
       .lean();
     const normalized = normalizeMapRecords(records);
-    return { records: normalized, count: normalized.length };
+    return { records: normalized, count: normalized.length, limit };
   }
 
-  const perBorough = Math.ceil(MAP_SAMPLE_SIZE / NYC_BOROUGHS.length);
+  const perBorough = Math.ceil(limit / NYC_BOROUGHS.length);
   const chunks = await Promise.all(
     NYC_BOROUGHS.map((borough) =>
       Request.find({ ...match, borough })
@@ -172,7 +182,7 @@ export async function fetchFastMapPoints(filter) {
   );
 
   const records = normalizeMapRecords(chunks.flat());
-  return { records, count: records.length };
+  return { records, count: records.length, limit };
 }
 
 export async function getDashboardBundleData(req) {
@@ -192,9 +202,10 @@ export async function getMapBundleData(req) {
   if (cached) return { payload: cached, cache: 'HIT' };
 
   const filter = buildMapMongoFilter(req);
+  const mapLimit = resolveMapPointLimit(req.query?.limit);
   const [stats, mapPoints] = await Promise.all([
     runStatsAggregation(filter),
-    fetchFastMapPoints(filter),
+    fetchFastMapPoints(filter, mapLimit),
   ]);
 
   const payload = { stats, mapPoints };

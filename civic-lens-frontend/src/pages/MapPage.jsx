@@ -7,13 +7,17 @@ import MapStatsBar from '../components/MapStatsBar';
 import NYCRequestMap from '../components/NYCRequestMap';
 import ChartLoadingOverlay from '../components/ChartLoadingOverlay';
 import { DataEmptyState, DataErrorState } from '../components/DataFetchStatus';
-import { DEFAULT_FILTERS, useFilters } from '../context/FilterContext';
+import RequestDetailsDrawer from '../components/RequestDetailsDrawer';
+import { DEFAULT_FILTERS } from '../context/FilterContext';
 import { useAppSnackbar, useSnackbarLoadSync } from '../context/AppSnackbarContext';
+import { fetchRequestById } from '../api/requests';
+import { CACHE_TTL, getCached, setCached } from '../api/apiCache';
 import useCascadingFacets from '../hooks/useCascadingFacets';
 import useMapData from '../hooks/useMapData';
 import useMinimumLoading from '../hooks/useMinimumLoading';
 import useFilterTransitionLoading from '../hooks/useFilterTransitionLoading';
 import { PAGE_SECTION_GAP } from '../styles/modelViewLayout';
+import { getMapPlotPoints } from '../utils/mapHelpers';
 
 const MAP_PLOT_MIN_HEIGHT = 480;
 
@@ -29,13 +33,18 @@ function MapSkeletonSlot() {
   );
 }
 
-export default function MapPage({ onNavigate }) {
-  const { setPendingModelCaseKey } = useFilters();
+function normalizeRequestResponse(response) {
+  return response?.data ?? response?.request ?? response;
+}
+
+export default function MapPage() {
   const { beginUserLoad } = useAppSnackbar();
   const [mapFilters, setMapFilters] = useState(() => ({ ...DEFAULT_FILTERS }));
   const [colorMode, setColorMode] = useState('delayBucket');
   const [highDelayOnly, setHighDelayOnly] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const mapExtra = useMemo(() => ({ highDelayOnly, mapBuckets: true }), [highDelayOnly]);
   const { facets, facetsReady, facetsLoading } = useCascadingFacets(mapFilters, mapExtra);
   const { data, loading, isRefreshing, error, refetch } = useMapData(mapFilters, mapExtra, {
@@ -93,6 +102,8 @@ export default function MapPage({ onNavigate }) {
     setHighDelayOnly(false);
     setColorMode('delayBucket');
     setSelectedRequestId(null);
+    setSelectedRequest(null);
+    setDrawerOpen(false);
   }, [beginUserLoad, beginTransition]);
 
   const onRetry = useCallback(() => {
@@ -116,30 +127,57 @@ export default function MapPage({ onNavigate }) {
   const showLoadingState = visibleInitialLoading || showFilterLoading;
 
   const handleSelectRequest = useCallback((request) => {
-    const id = request?.unique_key ?? request?._id ?? null;
-    setSelectedRequestId(id);
+    const key = request?.unique_key ?? request?._id ?? null;
+    setSelectedRequestId(key);
+    setSelectedRequest(request);
+    setDrawerOpen(true);
+
+    if (!key) return;
+
+    const storeKey = `request:${key}`;
+    const cached = normalizeRequestResponse(getCached(storeKey));
+    if (cached) {
+      setSelectedRequest(cached);
+      return;
+    }
+
+    fetchRequestById(key)
+      .then((raw) => {
+        const full = normalizeRequestResponse(raw);
+        if (!full) return;
+        setCached(storeKey, full, CACHE_TTL.requestDetails);
+        setSelectedRequest((prev) => {
+          const prevKey = prev?.unique_key ?? prev?._id;
+          return prevKey === key ? full : prev;
+        });
+      })
+      .catch(() => {
+        /* keep partial map point data in drawer */
+      });
   }, []);
 
-  const handleViewModelDetails = useCallback((request) => {
-    const key = request?.unique_key ?? request?._id;
-    if (!key) return;
-    setPendingModelCaseKey(key);
-    onNavigate?.('model');
-  }, [setPendingModelCaseKey, onNavigate]);
+  const handleCloseDrawer = useCallback(() => {
+    setDrawerOpen(false);
+  }, []);
 
   const mapRecords = hasData ? (data.mapPoints?.records ?? []) : [];
   const isEmpty = dataReady && hasData && mapRecords.length === 0;
+
+  const mappedRequestCount = useMemo(
+    () => (mapRecords.length ? getMapPlotPoints(mapRecords).length : 0),
+    [mapRecords],
+  );
 
   const stats = useMemo(() => {
     if (!hasData || showLoadingState) return null;
     const statsData = data.stats;
     return {
-      visibleRequests: data.mapPoints?.count ?? mapRecords.length,
+      mappedRequests: mappedRequestCount,
       avgPredictedDelay: statsData.avgPredictedHours ?? 0,
       highDelayCount: statsData.highDelayCount ?? 0,
       unresolvedRate: statsData.unresolvedRate ?? 0,
     };
-  }, [hasData, showLoadingState, data, mapRecords.length]);
+  }, [hasData, showLoadingState, data, mappedRequestCount]);
 
   if (!showLoadingState && error && !hasData) {
     return <DataErrorState error={error} onRetry={onRetry} />;
@@ -170,6 +208,7 @@ export default function MapPage({ onNavigate }) {
   }
 
   return (
+    <>
     <Box
       sx={{
         display: 'flex',
@@ -214,11 +253,18 @@ export default function MapPage({ onNavigate }) {
               colorMode={colorMode}
               selectedRequestId={selectedRequestId}
               onSelectRequest={handleSelectRequest}
-              onViewModelDetails={handleViewModelDetails}
+              showModelLink={false}
             />
           </Box>
         </>
       )}
     </Box>
+
+    <RequestDetailsDrawer
+      open={drawerOpen}
+      request={selectedRequest}
+      onClose={handleCloseDrawer}
+    />
+    </>
   );
 }

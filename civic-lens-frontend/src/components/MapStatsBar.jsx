@@ -1,5 +1,5 @@
 import { Grid } from '@mui/material';
-import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
+import MapOutlinedIcon from '@mui/icons-material/MapOutlined';
 import ScheduleOutlinedIcon from '@mui/icons-material/ScheduleOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
@@ -8,10 +8,10 @@ import { StatCard } from './AppCard';
 
 const STAT_CONFIG = [
   {
-    key: 'visibleRequests',
-    label: 'Visible Requests',
-    icon: VisibilityOutlinedIcon,
-    format: (s) => Number(s?.visibleRequests ?? 0).toLocaleString(),
+    key: 'mappedRequests',
+    label: 'Mapped Requests',
+    icon: MapOutlinedIcon,
+    format: (s) => Number(s?.mappedRequests ?? 0).toLocaleString(),
   },
   {
     key: 'avgPredictedDelay',

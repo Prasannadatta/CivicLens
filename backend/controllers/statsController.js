@@ -4,6 +4,7 @@ import {
   runDashboardAggregation,
   runStatsAggregation,
   fetchFastMapPoints,
+  resolveMapPointLimit,
 } from '../services/dashboardAggregation.js';
 import { buildMongoFilter, buildMapMongoFilter } from '../utils/queryFilters.js';
 
@@ -52,7 +53,8 @@ export async function getDashboardStats(req, res) {
 export async function getMapPoints(req, res) {
   try {
     const filter = buildMapMongoFilter(req);
-    res.json(await fetchFastMapPoints(filter));
+    const limit = resolveMapPointLimit(req.query?.limit);
+    res.json(await fetchFastMapPoints(filter, limit));
   } catch (err) {
     console.error('getMapPoints failed', err);
     res.status(500).json({ error: 'Failed to fetch map points' });

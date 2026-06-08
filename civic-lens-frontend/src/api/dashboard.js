@@ -1,4 +1,5 @@
 const BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const DEFAULT_MAP_POINT_LIMIT = Number(import.meta.env.VITE_MAP_POINT_LIMIT || 5000);
 
 function apiUrl(path, baseUrl = BASE) {
   const base = (baseUrl || '').replace(/\/$/, '');
@@ -47,7 +48,12 @@ export function fetchDashboardBundle(filters, extra, baseUrl, options = {}) {
 }
 
 export function fetchMapBundle(filters, extra, baseUrl, options = {}) {
-  return fetchEndpoint('/api/map-bundle', filters, extra, { baseUrl, ...options });
+  const { baseUrl: resolvedBase = BASE, signal } = options;
+  const params = filtersToParams(filters, extra);
+  params.set('limit', String(DEFAULT_MAP_POINT_LIMIT));
+  const qs = params.toString();
+  const url = apiUrl(`/api/map-bundle${qs ? `?${qs}` : ''}`, resolvedBase);
+  return fetch(url, { signal }).then((res) => parseJson(res, 'Failed to fetch /api/map-bundle'));
 }
 
 export function fetchCascadingFacets(filters, extra, baseUrl, options = {}) {

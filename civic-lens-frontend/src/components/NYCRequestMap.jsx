@@ -107,7 +107,16 @@ function MapRequestSummary({ request, onViewModelDetails, showModelLink = false 
   );
 }
 
-function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect, onViewModelDetails }) {
+function RequestMarker({
+  request,
+  color,
+  isSelected,
+  themeMode,
+  colors,
+  onSelect,
+  onViewModelDetails,
+  showModelLink,
+}) {
   const lat = Number(request.latitude);
   const lng = Number(request.longitude);
   const { radius, pathOptions, hoverFillOpacity, restFillOpacity } = getMarkerVisuals(
@@ -124,9 +133,8 @@ function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect
       radius={radius}
       pathOptions={pathOptions}
       eventHandlers={{
-        click: (e) => {
+        click: () => {
           onSelect?.(request);
-          e.target.openPopup();
         },
         mouseover: (e) => {
           e.target.setStyle({ fillOpacity: hoverFillOpacity });
@@ -142,7 +150,7 @@ function RequestMarker({ request, color, isSelected, themeMode, colors, onSelect
       <Popup closeButton className="civic-map-popup" offset={[0, -8]}>
         <MapRequestSummary
           request={request}
-          showModelLink
+          showModelLink={showModelLink}
           onViewModelDetails={onViewModelDetails}
         />
       </Popup>
@@ -156,6 +164,7 @@ export default function NYCRequestMap({
   selectedRequestId = null,
   onSelectRequest,
   onViewModelDetails,
+  showModelLink = false,
 }) {
   const colors = useAppColors();
   const { mode } = useColorMode();
@@ -264,6 +273,7 @@ export default function NYCRequestMap({
                   colors={colors}
                   onSelect={handleSelect}
                   onViewModelDetails={onViewModelDetails}
+                  showModelLink={showModelLink}
                 />
               );
             })}

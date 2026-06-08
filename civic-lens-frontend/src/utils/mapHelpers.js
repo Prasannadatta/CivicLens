@@ -41,7 +41,7 @@ export function getComplaintTypePalette(mode = 'light') {
 
 const COMPLAINT_TYPE_PALETTE = getComplaintTypePalette('light');
 
-export const MAX_MAP_POINTS = 2500;
+export const MAX_MAP_POINTS = Number(import.meta.env.VITE_MAX_MAP_POINT_LIMIT || 10000);
 
 export function isOpenRequest(record) {
   return Number(record?.is_unresolved) === 1;
