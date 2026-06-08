@@ -3,4 +3,8 @@ dist/
 .DS_Store
 *.log
 .env
-.env.*
+.env.local
+.env.*.local
+
+# CatBoost model artifact (~43 MB) — copy from VA/Project/models/catboost/
+backend/ml/catboost_model.pkl
